@@ -1,0 +1,8 @@
+---
+// The name of the 26 locations in the active lens: "Safety Energy Lock" or "node".
+interface Props { plural?: boolean; cap?: boolean; short?: boolean }
+const { plural = false, cap = false, short = false } = Astro.props;
+const c = (s: string) => (cap ? s[0].toUpperCase() + s.slice(1) : s);
+const jsj = short ? (plural ? 'locks' : 'lock') : plural ? 'Safety Energy Locks' : 'Safety Energy Lock';
+---
+{c(jsj)}

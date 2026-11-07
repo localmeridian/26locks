@@ -1,0 +1,570 @@
+---
+import Base from '../layouts/Base.astro';
+import Term from '../components/Term.astro';
+import Hint from '../components/Hint.astro';
+import Plate from '../components/Plate.astro';
+import SourceKeys from '../components/SourceKeys.astro';
+import { sels, depthOf } from '../data';
+import { drawnFlows, supervisorPath, type Target } from '../data/flows';
+import { supervisorCrossAfter } from '../data/system';
+import { howToApply, breath, projects, shortHolds, palming } from '../data/selfhelp';
+import type { Plate as PlateId } from '../data/positions';
+
+const byN = new Map(sels.map((s) => [s.n, s]));
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const projectLink: Record<string, string> = { mcv: '#player', attitudes: `${base}/fingers/#attitudes`, spleen: '#player', 'short-holds': '#short-holds' };
+// "High 19" is the upper part of a lock that covers a larger area [glossary: High / Low].
+const hiLo = (l: string) => { const m = l.match(/\b(High|Low) (\d{1,2})\b/); return m && `${m[1] === 'High' ? 'upper' : 'lower'} part of lock ${m[2]}`; };
+const figurePlates: PlateId[] = ['front', 'back'];
+const footPlates: PlateId[] = ['medial', 'lateral'];
+const plateLabel: Record<string, string> = { front: 'Front', back: 'Back', medial: 'Inner foot', lateral: 'Outer foot', sole: 'Sole' };
+
+// Every drawn hand, tagged by flow and step, so one set of drawings serves all flows.
+type HandMark = { flow: string; step: number; hand: 'R' | 'L'; x: number; y: number };
+const hands = (plate: PlateId): HandMark[] =>
+  drawnFlows.flatMap((f) => f.steps.flatMap((s, i) =>
+    ([['R', s.right], ['L', s.left]] as ['R' | 'L', Target | undefined][])
+      .filter(([, t]) => t?.at?.plate === plate)
+      .map(([hand, t]) => ({ flow: f.id, step: i, hand, x: t!.at!.x, y: t!.at!.y })),
+  ));
+const usesFeet = Object.fromEntries(drawnFlows.map((f) => [f.id, f.steps.some((s) => [s.right, s.left].some((t) => t?.at && footPlates.includes(t.at.plate)))]));
+// The current a flow follows on one drawing: a smooth line through the places the hands
+// rest, in step order (each step adds whichever hand moved). The Main Central Vertical is
+// drawn as its own path instead: down the front midline and up the back [C01, C02, C04].
+type Pt = [number, number];
+const smooth = (pts: Pt[]) => {
+  if (pts.length < 2) return '';
+  let d = `M${pts[0][0]} ${pts[0][1]}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] ?? pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] ?? p2;
+    const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6], c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
+    d += ` C${c1.map((v) => +v.toFixed(1)).join(' ')} ${c2.map((v) => +v.toFixed(1)).join(' ')} ${p2[0]} ${p2[1]}`;
+  }
+  return d;
+};
+const mcvPath: Partial<Record<PlateId, Pt[]>> = { front: [[200, 36], [200, 481]], back: [[200, 445], [200, 36]] };
+const currents = (plate: PlateId) => drawnFlows.map((f) => {
+  if (f.id === 'mcv') return { flow: f.id, d: smooth(mcvPath[plate] ?? []) };
+  const pts: Pt[] = [];
+  const last: Record<string, string> = {};
+  f.steps.forEach((st) => (['right', 'left'] as const).forEach((h) => {
+    const at = st[h]?.at;
+    if (!at) return;
+    const key = `${at.plate} ${at.x} ${at.y}`;
+    if (last[h] === key) return;
+    last[h] = key;
+    if (at.plate === plate && pts.at(-1)?.join() !== [at.x, at.y].join()) pts.push([at.x, at.y]);
+  }));
+  return { flow: f.id, d: smooth(pts) };
+}).filter((c) => c.d);
+const handR = (plate: PlateId) => (plate === 'front' || plate === 'back' ? 15 : 12);
+
+// Supervisor path segments between consecutive locks on the same drawing.
+const segs = (plate: PlateId) => supervisorPath.slice(1).flatMap((p, i) => {
+  const a = supervisorPath[i];
+  return a.at.plate === plate && p.at.plate === plate ? [{ i: i + 1, x1: a.at.x, y1: a.at.y, x2: p.at.x, y2: p.at.y }] : [];
+});
+const crossIndex = supervisorPath.findIndex((p) => p.n === supervisorCrossAfter);
+const pathData = supervisorPath.map((p) => ({ n: p.n, side: p.side, plate: p.at.plate, x: p.at.x, name: byN.get(p.n)!.name, depth: depthOf(p.n).n }));
+// The tabs fall into three families; a quiet label before each shows the shape of the system.
+const groupLabel: Record<string, string> = { 'The Trinity': 'Trinity', 'Daily flow': 'Daily', Correction: 'Correction' };
+const families = [...new Set(drawnFlows.map((f) => f.group))];
+// What each family is for, in a line, so a newcomer knows where to begin (glossary C02, C03, C04).
+const familyGist: Record<string, { t: string; keys: string[] }> = {
+  'The Trinity': { t: 'The three core flows: Main Central, Supervisor, Mediator. Begin here: the Main Central feeds all the others.', keys: ['C02', 'C03'] },
+  'Daily flow': { t: 'Three self-help flows for any day.', keys: ['C16', 'C04'] },
+  Correction: { t: 'Three short sequences that set the Mediator right.', keys: ['C02', 'C04'] },
+};
+const flowData = drawnFlows.map((f) => ({ id: f.id, steps: f.steps.length, feet: usesFeet[f.id] }));
+---
+<Base title="Flows" description="The Jin Shin Jyutsu flows step by step: where each hand rests, in order, with the source and confidence for every sequence." preload={['front', 'back']}>
+  <div class="wrap page">
+    <header class="intro">
+      <p class="eyebrow">Sequences</p>
+      <h1>The flows</h1>
+      <p class="prose lede">
+        Energy runs in currents. A flow follows one: usually a hand rests as an anchor while the other moves,
+        hold by hold.<SourceKeys keys={['C01', 'C02', 'C04']} />
+      </p>
+    </header>
+
+    <section class="player" id="player" data-flows>
+      <div class="flow-tabs" role="group" aria-label="Choose a flow">
+        {families.map((g) => (
+          <div class="ft-fam">
+            <p class="ft-group">{groupLabel[g] ?? g}<SourceKeys keys={familyGist[g]?.keys ?? []} /></p>
+            <p class="ft-gist">{familyGist[g]?.t}</p>
+            <div class="ft-row">
+              {drawnFlows.filter((f) => f.group === g).map((f) => (
+                <button type="button" class:list={['ft', { 'is-on': f === drawnFlows[0] }]} data-flow={f.id} aria-pressed={f === drawnFlows[0] ? 'true' : 'false'} aria-label={`${f.short} (${f.group})`}>{f.short}</button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div class="player-body">
+        <div class="figs" data-figs>
+          <div class="fig-row">
+            {figurePlates.map((p) => (
+              <Plate plate={p} sels={sels} only={[]} interactive={false} label={plateLabel[p]} class="fp">
+                <g class="trail">
+                  {currents(p).map((c) => <g class="current" data-flow={c.flow}><path class="cur-bed" d={c.d} /><path class="cur-glow" d={c.d} pathLength="100" /><path class="cur-pulse" d={c.d} pathLength="100" /></g>)}
+                  {hands(p).map((h) => <circle class="trail-dot" data-flow={h.flow} data-hand={h.hand} cx={h.x} cy={h.y} r="4" />)}
+                </g>
+                {hands(p).map((h) => (
+                  <g class:list={['hand', h.hand === 'R' ? 'r' : 'l']} data-flow={h.flow} data-step={h.step} transform={`translate(${h.x} ${h.y})`}>
+                    <circle r={handR(p)} />
+                    <text dy=".36em">{h.hand}</text>
+                  </g>
+                ))}
+              </Plate>
+            ))}
+          </div>
+          <div class="fig-row feet-row" data-feet hidden>
+            {footPlates.map((p) => (
+              <Plate plate={p} sels={sels} only={[]} interactive={false} label={plateLabel[p]} class="fp foot">
+                {hands(p).map((h) => (
+                  <g class:list={['hand', h.hand === 'R' ? 'r' : 'l']} data-flow={h.flow} data-step={h.step} transform={`translate(${h.x} ${h.y})`}>
+                    <circle r={handR(p)} />
+                    <text dy=".36em">{h.hand}</text>
+                  </g>
+                ))}
+              </Plate>
+            ))}
+          </div>
+          <p class="fig-key"><strong class="hand-key r">R</strong> and <strong class="hand-key l">L</strong>: the body’s own hands. The light is the current.</p>
+        </div>
+
+        <div class="flow-panels">
+          {drawnFlows.map((f, fi) => (
+            <article class="flow-panel" data-panel={f.id} hidden={fi !== 0}>
+              <p class="eyebrow">{f.group}</p>
+              <h2>{f.name}</h2>
+              <p class="purpose">{f.purpose}</p>
+              <div class="controls">
+                <button type="button" data-prev aria-label="Previous step">‹</button>
+                <span class="count" data-count>Step 1 of {f.steps.length}</span>
+                <button type="button" data-next aria-label="Next step">›</button>
+                <button type="button" class="play" data-play aria-label="Pause"><span class="pi" aria-hidden="true"></span></button>
+              </div>
+              <ol class="steps">
+                {f.steps.map((s, i) => (
+                  <li>
+                    <button type="button" class:list={['step', { 'is-on': i === 0 }]} data-step={i}>
+                      <span class="sn">{i + 1}</span>
+                      <span class="hands">
+                        {(['right', 'left'] as const).map((side) => {
+                          const t = s[side];
+                          if (!t) return null;
+                          const key = <b class:list={['hand-key', side === 'right' ? 'r' : 'l']}>{side === 'right' ? 'R' : 'L'}</b>;
+                          // An anchor hand that has not moved since the last step is named once, then only noted.
+                          if (i > 0 && f.steps[i - 1][side]?.label === t.label) return <span class="h still">{key} <span>still on {t.label}</span></span>;
+                          return <span class="h">{key} <span>{t.label}{t.sel && <span class="wh"> · {byN.get(t.sel)!.where}</span>}{!t.sel && hiLo(t.label) && <span class="wh"> · {hiLo(t.label)}</span>}{!t.at && <em class="nd"> (not drawn)</em>}</span></span>;
+                        })}
+                        {s.note && <span class="sn-note">{s.note}</span>}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ol>
+              {f.variants && <p class="variants"><strong>Variants.</strong> {f.variants}</p>}
+              <p class="meta"><span class="conf" title="How well the sources agree on these steps">Source agreement: {f.confidence}</span> <SourceKeys keys={f.sources} /></p>
+            </article>
+          ))}
+          <Hint label="Hold"><span>No step has a set time. Move on when the time you gave it is up, or when you feel a steady pulse under your fingers. To begin, a few minutes a step is plenty. Tap a step to pause there. <SourceKeys keys={['C16']} /></span></Hint>
+          <p class="small">
+            The Main Central, the Mediator and the three daily flows are checked step by step against Burmeister’s first Self-Help Book. Here a step is a pair of hands, so her daily sequences of 5, 8 and 5 placements show as 4, 7 and 4. The Corrections come from Text 1, through secondary sources.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="sup" id="supervisor" data-sup>
+      <header class="sup-head">
+        <p class="eyebrow">The path</p>
+        <h2>How the Supervisor runs</h2>
+        <p class="prose">
+          The left Supervisor passes the <Term plural short /> in a fixed order: it starts at 1, the inner knee, crosses sides at 4, the base of
+          the skull, and ends at 15, the groin. Each pass goes one depth deeper.
+          {' '}<SourceKeys keys={['C01', 'C02']} />
+        </p>
+        <p class="small">This order is a teacher’s table. Burmeister’s second book counts 23 locks on the Supervisor and 3 on the Mediator, and doesn’t say which three; her first speaks of the 26 on the Supervisor. The table draws 25, all but Lock 26, so it includes locks the Mediator also uses. <SourceKeys keys={['A44', 'C16']} /></p>
+      </header>
+      <div class="sup-body">
+        <div class="sup-figs dimmed">
+          <div class="fig-row">
+            {figurePlates.map((p) => (
+              <Plate plate={p} sels={sels} interactive={false} label={plateLabel[p]} class="sp">
+                <g class="path">
+                  {segs(p).map((s) => <line data-i={s.i} x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2} />)}
+                </g>
+              </Plate>
+            ))}
+          </div>
+          <div class="fig-row feet-row">
+            {(['medial', 'lateral', 'sole'] as PlateId[]).map((p) => (
+              <Plate plate={p} sels={sels} interactive={false} label={plateLabel[p]} class="sp foot" />
+            ))}
+          </div>
+        </div>
+        <div class="sup-panel">
+          <div class="controls">
+            <button type="button" data-sprev aria-label="Previous lock">‹</button>
+            <span class="count" data-scount></span>
+            <button type="button" data-snext aria-label="Next lock">›</button>
+            <button type="button" class="play" data-splay aria-label="Pause"><span class="pi" aria-hidden="true"></span></button>
+          </div>
+          <div class="now" data-snow>
+            <span class="now-n" data-sn></span>
+            <span>
+              <a class="now-name" data-sname href="#"></a>
+              <span class="now-sub" data-ssub></span>
+            </span>
+          </div>
+          <p class="cross" data-scross hidden>Here the Supervisor crosses at the back of the head to the other side.</p>
+          <ol class="order">
+            {pathData.map((p, i) => (
+              <li><button type="button" class:list={['oc', `d${p.depth}`, { crossed: i > crossIndex }]} data-si={i} title={`${p.side === 'L' ? 'Left' : 'Right'} ${p.n}: ${p.name}`}>{p.n}</button></li>
+            ))}
+          </ol>
+          <p class="small">Outlined numbers come after the crossing, on the other side. 26 is not on the path. The right Supervisor mirrors it.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="more" id="how-to-apply">
+      <p class="eyebrow">Burmeister’s way</p>
+      <h2>How to apply a hold</h2>
+      <p class="prose">Her practical advice, applied here to every lock and flow. <SourceKeys keys={howToApply.sources} /></p>
+      <dl class="apply">
+        {howToApply.items.map((i) => <div><dt>{i.t}</dt><dd>{i.d}</dd></div>)}
+      </dl>
+      <div class="breath">
+        <h3>A breath to begin</h3>
+        <ol>{breath.steps.map((b) => <li>{b}</li>)}</ol>
+        <p class="small">{breath.note} <SourceKeys keys={breath.sources} /></p>
+      </div>
+    </section>
+
+    <section class="more" id="daily">
+      <p class="eyebrow">A day of self-help</p>
+      <h2>The four Projects</h2>
+      <p class="prose">Daily self-help comes in four Projects. Take what fits the day. <SourceKeys keys={['C16']} /></p>
+      <ol class="projects">
+        {projects.map((p) => <li><span class="pn">{p.n}</span><div><a href={projectLink[p.href]}>{p.t}</a><p>{p.d}</p></div></li>)}
+      </ol>
+    </section>
+
+    <section class="more" id="short-holds">
+      <p class="eyebrow">Project IV, and one from Book 3</p>
+      <h2>Short holds</h2>
+      <p class="prose">Quick places for the hands, most of them easy to do sitting down. What each is for is its traditional association. <SourceKeys keys={['C16', 'C19']} /></p>
+      <ul class="shorts">
+        {shortHolds.map((h) => <li><h3>{h.t}</h3><p>{h.d}</p><p class="for">{h.for}</p></li>)}
+      </ul>
+    </section>
+
+    <section class="more" id="palming">
+      <p class="eyebrow">Book 3</p>
+      <h2>A palm over a hurt</h2>
+      <p class="prose">Traditional first aid for small hurts, alongside care and never instead of it. Bleeding that won’t stop, a hernia, or a serious burn needs medical help. <SourceKeys keys={palming.sources} /></p>
+      <dl class="apply">
+        {palming.items.map((i) => <div><dt>{i.t}</dt><dd>{i.d}</dd></div>)}
+      </dl>
+      <p class="small">{palming.direction}</p>
+    </section>
+
+  </div>
+</Base>
+
+<script define:vars={{ flowData, pathData }} is:inline>
+  window.__flows = { flowData, pathData };
+</script>
+
+<script>
+  type FD = { id: string; steps: number; feet: boolean };
+  type PD = { n: number; side: 'L' | 'R'; plate: string; x: number; name: string; depth: number };
+  const { flowData, pathData } = (window as unknown as { __flows: { flowData: FD[]; pathData: PD[] } }).__flows;
+  // Sticky drawings sit just under the site header, whose height varies with width.
+  const head = document.querySelector<HTMLElement>('.site-header');
+  const setHead = () => document.documentElement.style.setProperty('--head-h', `${head?.offsetHeight ?? 0}px`);
+  setHead();
+  addEventListener('resize', setHead);
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ── Flow player ──
+  const fr = document.querySelector<HTMLElement>('[data-flows]')!;
+  let flow = flowData[0].id;
+  let step = 0;
+  let timer: number | undefined;
+
+  function showFlow() {
+    const f = flowData.find((x) => x.id === flow)!;
+    for (const t of fr.querySelectorAll<HTMLElement>('.ft')) {
+      const on = t.dataset.flow === flow;
+      t.classList.toggle('is-on', on);
+      t.setAttribute('aria-pressed', String(on));
+    }
+    for (const p of fr.querySelectorAll<HTMLElement>('[data-panel]')) p.hidden = p.dataset.panel !== flow;
+    fr.querySelector<HTMLElement>('[data-feet]')!.hidden = !f.feet;
+    for (const d of fr.querySelectorAll<SVGElement>('.trail-dot, .current')) d.classList.toggle('on', d.dataset.flow === flow);
+    paintStep();
+  }
+  function paintStep() {
+    const f = flowData.find((x) => x.id === flow)!;
+    for (const h of fr.querySelectorAll<SVGElement>('.hand')) h.classList.toggle('on', h.dataset.flow === flow && +h.dataset.step! === step);
+    const panel = fr.querySelector<HTMLElement>(`[data-panel="${flow}"]`)!;
+    for (const s of panel.querySelectorAll<HTMLElement>('.step')) s.classList.toggle('is-on', +s.dataset.step! === step);
+    panel.querySelector('[data-count]')!.textContent = `Step ${step + 1} of ${f.steps}`;
+  }
+  function go(d: number) {
+    const n = flowData.find((x) => x.id === flow)!.steps;
+    step = (step + d + n) % n;
+    paintStep();
+  }
+  const setPlay = (scope: Element, sel: string, on: boolean) => {
+    for (const b of scope.querySelectorAll<HTMLElement>(sel)) { b.classList.toggle('is-playing', on); b.setAttribute('aria-label', on ? 'Pause' : 'Play'); }
+  };
+  function start() {
+    clearInterval(timer);
+    timer = window.setInterval(() => go(1), reduced ? 6000 : 3600);
+    setPlay(fr, '[data-play]', true);
+  }
+  function stop() {
+    clearInterval(timer); timer = undefined;
+    setPlay(fr, '[data-play]', false);
+  }
+  for (const t of fr.querySelectorAll<HTMLElement>('.ft')) t.addEventListener('click', () => { stop(); flow = t.dataset.flow!; step = 0; showFlow(); });
+  fr.addEventListener('click', (e) => {
+    const t = e.target as HTMLElement;
+    if (t.closest('[data-prev]')) { stop(); go(-1); }
+    else if (t.closest('[data-next]')) { stop(); go(1); }
+    else if (t.closest('[data-play]')) {
+      if (timer) return stop();
+      start();
+    } else {
+      const s = t.closest<HTMLElement>('.step');
+      if (s) { stop(); step = +s.dataset.step!; paintStep(); }
+    }
+  });
+  showFlow();
+  // Play gently on its own while the player is on screen, until the reader takes over.
+  let touched = false;
+  fr.addEventListener('pointerdown', () => { touched = true; }, true);
+  if (!reduced) new IntersectionObserver(([e]) => {
+    if (e.isIntersecting && !touched && !timer) start();
+    else if (!e.isIntersecting && timer) stop();
+  }, { threshold: .35 }).observe(fr);
+
+  // ── Supervisor path ──
+  const sr = document.querySelector<HTMLElement>('[data-sup]')!;
+  const marks = [...sr.querySelectorAll<SVGGElement>('.mk')];
+  const lines = [...sr.querySelectorAll<SVGLineElement>('.path line')];
+  const chips = [...sr.querySelectorAll<HTMLButtonElement>('.oc')];
+  // Five of the locks are on the feet, drawn small under the body: when the path reaches one, the feet come forward.
+  const sfigs = sr.querySelector<HTMLElement>('.sup-figs')!;
+  const feet = [...sr.querySelectorAll<HTMLElement>('.feet-row [data-plate]')];
+  const footName: Record<string, string> = { medial: 'inner foot', lateral: 'outer foot', sole: 'sole of the foot' };
+  let si = 0;
+  let stimer: number | undefined;
+  const markFor = (p: PD) => marks.find((m) => +m.dataset.n! === p.n && m.closest<HTMLElement>('[data-plate]')!.dataset.plate === p.plate && +m.dataset.x! === p.x);
+  function paintPath() {
+    const cur = pathData[si];
+    const seen = new Set(pathData.slice(0, si).map(markFor));
+    const here = markFor(cur);
+    for (const m of marks) {
+      m.classList.toggle('is-active', m === here);
+      m.classList.toggle('is-related', seen.has(m));
+    }
+    for (const l of lines) l.classList.toggle('on', +l.dataset.i! <= si);
+    chips.forEach((c, i) => { c.classList.toggle('is-on', i === si); c.classList.toggle('seen', i < si); });
+    sr.querySelector('[data-scount]')!.textContent = `${si + 1} of ${pathData.length}`;
+    const n = sr.querySelector<HTMLElement>('[data-sn]')!;
+    n.textContent = String(cur.n);
+    n.className = `now-n d${cur.depth}`;
+    const a = sr.querySelector<HTMLAnchorElement>('[data-sname]')!;
+    a.textContent = cur.name;
+    a.href = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/lock/${cur.n}/`;
+    sr.querySelector('[data-ssub]')!.textContent = `${cur.side === 'L' ? 'Left' : 'Right'} side${footName[cur.plate] ? `, ${footName[cur.plate]}` : ''} · ${['', '1st', '2nd', '3rd', '4th', '5th'][cur.depth]} Depth`;
+    sfigs.classList.toggle('on-foot', !!footName[cur.plate]);
+    for (const f of feet) f.classList.toggle('here', f.dataset.plate === cur.plate);
+    sr.querySelector<HTMLElement>('[data-scross]')!.hidden = !(si > 0 && pathData[si - 1].side !== cur.side);
+  }
+  function sgo(d: number) { si = (si + d + pathData.length) % pathData.length; paintPath(); }
+  function sstop() { clearInterval(stimer); stimer = undefined; setPlay(sr, '[data-splay]', false); }
+  function sstart() {
+    if (si === pathData.length - 1) { si = 0; paintPath(); }
+    clearInterval(stimer);
+    stimer = window.setInterval(() => (si === pathData.length - 1 ? sstop() : sgo(1)), reduced ? 4000 : 1800);
+    setPlay(sr, '[data-splay]', true);
+  }
+  sr.querySelector('[data-sprev]')!.addEventListener('click', () => { sstop(); sgo(-1); });
+  sr.querySelector('[data-snext]')!.addEventListener('click', () => { sstop(); sgo(1); });
+  sr.querySelector('[data-splay]')!.addEventListener('click', () => (stimer ? sstop() : sstart()));
+  let stouched = false;
+  sr.addEventListener('pointerdown', () => { stouched = true; }, true);
+  if (!reduced) new IntersectionObserver(([e]) => {
+    if (e.isIntersecting && !stouched && !stimer && si === 0) sstart();
+  }, { threshold: .4 }).observe(sr);
+  chips.forEach((c, i) => c.addEventListener('click', () => { sstop(); si = i; paintPath(); }));
+  // Arriving from a lock page (?sup=7#supervisor): open the path at that lock and let the reader press play.
+  const asked = pathData.findIndex((p) => p.n === +(new URLSearchParams(location.search).get('sup') ?? ''));
+  if (asked >= 0) { si = asked; stouched = true; }
+  if (location.hash === '#supervisor') {
+    document.documentElement.dataset.ownHash = '1';
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+    const land = () => setTimeout(() => sr.scrollIntoView({ block: 'start', behavior: 'instant' }));
+    if (document.readyState === 'complete') land(); else addEventListener('load', land, { once: true });
+  }
+  paintPath();
+</script>
+
+<style>
+  .page { padding-top: 48px; padding-bottom: 96px; }
+  .intro h1 { margin: 8px 0 16px; }
+  .small { font-size: .84rem; color: var(--ink-3); line-height: 1.5; }
+  .hand-key { display: inline-grid; place-items: center; width: 1.45em; height: 1.45em; border-radius: 50%; font: 700 .72rem/1 var(--sans); color: var(--paper); vertical-align: .08em; }
+  .hand-key.r { background: var(--seal); }
+  .hand-key.l { background: var(--ink-2); }
+
+  .player { scroll-margin-top: calc(var(--head-h, 64px) + 8px); }
+  .flow-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 28px; margin: 28px 0 24px; padding-block: 18px; border-block: 1px solid var(--rule); }
+  .ft { border: 1px solid var(--rule); background: transparent; color: var(--ink-2); border-radius: 999px; padding: 9px 14px; font: 500 .86rem var(--sans); cursor: pointer; }
+  .ft-fam { display: flex; flex-direction: column; min-width: 0; }
+  .ft-group { margin: 0 0 4px; font: 600 .66rem var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--seal); }
+  .ft-gist { flex: 1; margin: 0 0 10px; font-size: .86rem; line-height: 1.45; color: var(--ink-2); }
+  .ft-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .fig-key { margin: 10px 0 0; text-align: center; font-size: .82rem; color: var(--ink-3); }
+  .ft:hover { border-color: var(--ink-3); }
+  .ft.is-on { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+
+  .player-body, .sup-body { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 40px; align-items: start; }
+  .figs, .sup-figs { position: sticky; top: 76px; }
+  .fig-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .fig-row :global(.plate:not(.foot) svg) { max-height: 66svh; }
+  .feet-row[hidden] { display: none; }
+  .feet-row { grid-template-columns: repeat(3, 1fr); margin-top: 12px; }
+  .figs .feet-row { grid-template-columns: 1fr 1fr; max-width: 70%; margin-inline: auto; }
+
+  .hand { opacity: 0; transition: opacity .35s var(--ease); pointer-events: none; }
+  .hand.on { opacity: 1; }
+  .hand circle { stroke: var(--paper); stroke-width: 2; vector-effect: non-scaling-stroke; }
+  .hand.r circle { fill: var(--seal); }
+  .hand.l circle { fill: var(--ink-2); }
+  .hand.on circle { animation: settle .5s var(--ease); transform-box: fill-box; transform-origin: center; }
+  .hand text { fill: var(--paper); font: 700 13px/1 var(--sans); text-anchor: middle; }
+  :global(.plate-medial) .hand text, :global(.plate-lateral) .hand text { font-size: 10px; }
+  .trail-dot { fill: var(--ink-3); opacity: 0; transition: opacity .3s; }
+  /* The current: a soft bed of colour along the path, and a light that keeps travelling it. */
+  .current { opacity: 0; transition: opacity .6s var(--ease); pointer-events: none; }
+  .current.on { opacity: 1; }
+  .current path { fill: none; stroke: var(--seal); stroke-linecap: round; stroke-linejoin: round; }
+  .cur-bed { stroke-width: 16; opacity: .13; }
+  .cur-glow { stroke-width: 22; opacity: .2; stroke-dasharray: 16 84; animation: travel 4.5s linear infinite; }
+  .cur-pulse { stroke-width: 7; opacity: .9; stroke-dasharray: 6 94; animation: travel 4.5s linear infinite; }
+  @keyframes travel { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
+  @media (prefers-reduced-motion: reduce) { .cur-glow, .cur-pulse { animation: none; stroke-dasharray: none; opacity: .3; } }
+  .play { position: relative; }
+  .pi { display: block; width: 0; height: 0; margin-left: 2px; border-style: solid; border-width: 6px 0 6px 10px; border-color: transparent transparent transparent currentColor; }
+  .play.is-playing .pi { width: 10px; height: 12px; margin: 0; border: 0; border-inline: 3.5px solid currentColor; }
+  .trail-dot.on { opacity: .35; }
+  @keyframes settle { from { transform: scale(1.5); opacity: .3; } }
+
+  .flow-panel { padding: 24px 0 0; border-top: 1px solid var(--rule); }
+  .flow-panel h2 { margin: 4px 0 10px; font-size: clamp(1.7rem, 3.4vw, 2.3rem); }
+  .flow-panel .eyebrow { margin: 0; }
+  .purpose { color: var(--ink-2); font-size: .95rem; line-height: 1.55; }
+  .controls { display: flex; align-items: center; gap: 8px; margin: 18px 0 10px; }
+  .controls button { min-width: 38px; height: 38px; border-radius: 999px; border: 1px solid var(--rule); background: transparent; color: var(--ink); font: 500 1.05rem var(--sans); cursor: pointer; }
+  .controls button:hover { border-color: var(--ink-3); }
+  .controls .play { padding: 0; width: 38px; display: grid; place-items: center; margin-left: auto; background: transparent; color: var(--ink-2); border-color: var(--rule); }
+  .controls .play.is-playing { color: var(--seal); border-color: var(--seal); }
+  .count { font: 600 .72rem var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); min-width: 92px; text-align: center; }
+  .steps { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
+  .step { width: 100%; display: flex; gap: 14px; align-items: flex-start; text-align: left; padding: 10px 12px; border-radius: 12px; border: 1px solid transparent; background: none; color: var(--ink); font: inherit; cursor: pointer; }
+  .step:hover { background: var(--paper-2); }
+  .step.is-on { background: var(--paper-2); border-color: var(--rule); }
+  .sn { flex: none; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font: 650 .74rem var(--sans); border: 1px solid var(--rule); color: var(--ink-3); }
+  .step.is-on .sn { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .hands { display: grid; gap: 4px; font-size: .94rem; }
+  .h { display: flex; gap: 8px; align-items: center; }
+  .wh { color: var(--ink-3); font-size: .84rem; }
+  .h { align-items: flex-start; }
+  .h.still { color: var(--ink-3); font-size: .86rem; }
+  .h.still .hand-key { opacity: .4; }
+  .figs:has([data-feet]:not([hidden])) .fig-row:not(.feet-row) :global(svg) { max-height: 48svh; }
+  .sup-figs .fig-row:not(.feet-row) :global(svg) { max-height: 52svh; }
+  .sup-figs .feet-row { grid-template-columns: 1.5fr 1.5fr .7fr; align-items: end; max-width: 80%; margin-inline: auto; transition: max-width .5s var(--ease); }
+  .sup-figs .fig-row :global(svg) { transition: max-height .5s var(--ease); }
+  .sup-figs .feet-row :global(.plate) { transition: opacity .4s var(--ease); }
+  .sup-figs.on-foot .fig-row:not(.feet-row) :global(svg) { max-height: 34svh; }
+  .sup-figs.on-foot .feet-row { max-width: 100%; }
+  .sup-figs.on-foot .feet-row :global(.plate:not(.here)) { opacity: .4; }
+  .nd { color: var(--ink-3); font-size: .82rem; }
+  .sn-note { font-size: .82rem; color: var(--ink-3); }
+  .variants { font-size: .86rem; color: var(--ink-2); line-height: 1.55; margin-top: 16px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: baseline; margin-top: 14px; }
+  .conf { font: 600 .66rem var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
+  .flow-panels .small { margin-top: 16px; }
+
+  .sup { margin-top: 112px; scroll-margin-top: 90px; }
+  .more { margin-top: 88px; scroll-margin-top: 90px; }
+  .more h2 { margin: 6px 0 14px; }
+  .apply { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 18px 32px; margin: 20px 0 12px; }
+  .apply dt { font: 600 .92rem var(--sans); }
+  .apply dd { margin: 3px 0 0; color: var(--ink-2); line-height: 1.5; }
+  .breath { margin-top: 28px; padding: 20px 24px; background: var(--seal-soft); border-radius: 14px; }
+  .breath h3 { margin: 0 0 8px; }
+  .breath ol { margin: 0 0 8px; padding-left: 20px; display: grid; gap: 3px; }
+  .projects { list-style: none; margin: 20px 0 0; padding: 0; display: grid; gap: 16px; }
+  .projects li { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 12px; align-items: baseline; padding-top: 14px; border-top: 1px solid var(--rule); }
+  .pn { font: italic 500 1.4rem var(--serif); color: var(--seal); }
+  .projects a { font-weight: 600; }
+  .projects p { margin: 3px 0 0; color: var(--ink-2); line-height: 1.5; }
+  .shorts { list-style: none; margin: 20px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 20px 32px; }
+  .shorts h3 { margin: 0 0 3px; font-size: 1.05rem; }
+  .shorts p { margin: 0; color: var(--ink-2); line-height: 1.45; }
+  .shorts .for { margin-top: 4px; font-size: .84rem; color: var(--ink-3); }
+  .sup-head h2 { margin: 6px 0 14px; }
+  .sup-body { margin-top: 28px; }
+  .path line { stroke: var(--ink-3); stroke-width: 1.2; stroke-dasharray: 3 4; opacity: .25; vector-effect: non-scaling-stroke; transition: opacity .3s, stroke .3s; }
+  .path line.on { stroke: var(--seal); opacity: .85; stroke-dasharray: none; }
+  .sup-panel { padding: 24px 0 0; border-top: 1px solid var(--rule); }
+  .sup-panel .controls { margin-top: 0; }
+  .now { display: flex; gap: 16px; align-items: center; margin: 12px 0; }
+  .now-n { flex: none; width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; font: 650 1.4rem var(--sans); color: var(--paper); background: var(--d); }
+  .now-name { display: block; font: 600 1.5rem/1.2 var(--serif); color: var(--ink); text-decoration: none; }
+  .now-name:hover { color: var(--seal); }
+  .now-sub { font-size: .86rem; color: var(--ink-3); }
+  .cross { font-size: .88rem; color: var(--seal); margin: 0 0 8px; }
+  .order { list-style: none; padding: 0; margin: 16px 0 12px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .oc { width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid var(--d); background: transparent; color: var(--d); font: 650 .8rem var(--sans); cursor: pointer; transition: all .25s var(--ease); }
+  .oc.seen, .oc.is-on { background: var(--d); color: var(--paper); }
+  .oc.is-on { transform: scale(1.18); box-shadow: 0 0 0 3px color-mix(in oklab, var(--d) 30%, transparent); }
+  .oc.crossed:not(.seen):not(.is-on) { border-style: dashed; }
+
+
+  @media (max-width: 860px) {
+    .player-body, .sup-body { grid-template-columns: 1fr; gap: 20px; }
+    /* Keep the drawings in view while the steps scroll underneath. */
+    .figs, .sup-figs { top: var(--head-h, 0px); z-index: 3; background: var(--paper); padding: 8px 0 6px; margin-inline: -16px; box-shadow: 0 10px 14px -12px rgb(0 0 0 / .25); }
+    .fig-row :global(figcaption) { display: none; }
+    .feet-row { margin-top: 4px; max-width: 70%; margin-inline: auto; }
+    .feet-row :global(svg) { max-height: 9svh; }
+    .figs:has([data-feet]:not([hidden])) .fig-row:not(.feet-row) :global(svg) { max-height: 26svh; }
+    .sup-figs .fig-row:not(.feet-row) :global(svg) { max-height: 26svh; }
+    .sup-figs.on-foot .fig-row:not(.feet-row) :global(svg) { max-height: 15svh; }
+    .sup-figs.on-foot .feet-row :global(svg) { max-height: 17svh; }
+    .sup-figs .feet-row { grid-template-columns: 1.3fr 1.3fr 1fr; }
+    .flow-tabs { flex-wrap: nowrap; overflow-x: auto; margin-inline: -16px; padding-inline: 16px; scrollbar-width: none; }
+    .flow-tabs { grid-template-columns: 1fr; gap: 14px; }
+    .ft-gist { margin-bottom: 8px; }
+    /* Short enough that the flow’s name and words stay readable below. */
+    .fig-row :global(.plate:not(.foot) svg) { max-height: 30svh; }
+    .flow-panel, .sup-panel { padding: 20px; }
+    /* The drawings are small here, so the hands grow to stay legible. */
+    .hand circle, .hand text { scale: 1.7; }
+    :global(.plate-medial) .hand :is(circle, text), :global(.plate-lateral) .hand :is(circle, text) { scale: 1.4; }
+  }
+</style>

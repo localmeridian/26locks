@@ -1,0 +1,167 @@
+---
+// One drawing (front, back, a foot) with its markers for the 26 locations.
+import { FIG_W, FIG_H, FOOT_W, FOOT_H, SOLE_W, SOLE_H } from '../lib/figure';
+import { positions, type Plate } from '../data/positions';
+import type { Sel } from '../data/types';
+
+interface Props {
+  plate: Plate;
+  sels: Sel[];
+  /** Show the ascending / descending current along the body. */
+  currents?: boolean;
+  /** Only draw these lock numbers (others hidden). */
+  only?: number[];
+  /** Highlight a single lock (static pages). */
+  focus?: number;
+  label?: string;
+  class?: string;
+  interactive?: boolean;
+  /** Label the person's own right and left beside the head (front and back views). */
+  sides?: boolean;
+}
+const { plate, sels, currents = false, only, focus, label, class: cls, interactive = true, sides = false } = Astro.props;
+
+const isFigure = plate === 'front' || plate === 'back';
+const [W, H] = isFigure ? [FIG_W, FIG_H] : plate === 'sole' ? [SOLE_W, SOLE_H] : [FOOT_W, FOOT_H];
+const vb = `0 0 ${W} ${H}`;
+
+const byN = new Map(sels.map((s) => [s.n, s]));
+type Marker = { n: number; x: number; y: number; depth: number; side: 'a' | 'b'; lens?: string };
+const markers: Marker[] = [];
+for (const [k, list] of Object.entries(positions)) {
+  const n = +k;
+  if (only && !only.includes(n)) continue;
+  const s = byN.get(n);
+  if (!s) continue;
+  const sets: [typeof list, string | undefined][] = [[list, undefined]];
+  for (const [ps, lens] of sets) {
+    for (const p of ps) {
+      if (p.plate !== plate) continue;
+      markers.push({ n, x: p.x, y: p.y, depth: s.depth, side: 'a', lens });
+      if (p.mirror) markers.push({ n, x: 400 - p.x, y: p.y, depth: s.depth, side: 'b', lens });
+    }
+  }
+}
+// Draw the focused lock last so it sits on top.
+markers.sort((a, b) => (a.n === focus ? 1 : 0) - (b.n === focus ? 1 : 0));
+const r = isFigure ? 13.5 : plate === 'sole' ? 10 : 11;
+const uid = `p-${plate}-${Math.random().toString(36).slice(2, 7)}`;
+// The figure is rendered art (scripts/figure): a silhouette and contour lines that take
+// their colour from the theme, and a shading mask laid over the body in ink.
+const art = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/figure/${plate}`;
+---
+<figure class:list={['plate', `plate-${plate}`, cls]} data-plate={plate}>
+  <svg viewBox={vb} role="group" aria-label={label ?? `${plate} view`}>
+    <defs>
+      <linearGradient id={`${uid}-up`} x1="0" y1="1" x2="0" y2="0">
+        <stop offset="0" stop-color="var(--seal)" stop-opacity="0" />
+        <stop offset=".5" stop-color="var(--seal)" stop-opacity=".55" />
+        <stop offset="1" stop-color="var(--seal)" stop-opacity="0" />
+      </linearGradient>
+    </defs>
+
+    <g class="body fig">
+      <mask id={`${uid}-shade`} maskUnits="userSpaceOnUse" x="0" y="0" width={W} height={H}>
+        <image href={`${art}-shade.webp`} width={W} height={H} />
+      </mask>
+      <use class="fig-fill" href={`${art}.svg#fill`} />
+      <rect class="fig-shade" width={W} height={H} mask={`url(#${uid}-shade)`} />
+      <use class="fig-lines" href={`${art}.svg#lines`} />
+    </g>
+    {isFigure && currents && (
+      <g class:list={['current', plate === 'back' ? 'up' : 'down']} aria-hidden="true">
+        {[0, 1, 2].map((i) => (
+          <path class={['cur-bed', 'cur-glow', 'cur-pulse'][i]} pathLength="100"
+            d={plate === 'back' ? 'M 200 520 C 200 400 200 260 200 170 C 200 120 214 80 200 30' : 'M 200 30 C 200 120 200 200 200 300 C 200 400 200 470 200 520'} />
+        ))}
+      </g>
+    )}
+
+    <slot />
+    {sides && isFigure && (
+      <g class="sides" aria-hidden="true">
+        <text x="70" y="60">{plate === 'front' ? 'Right' : 'Left'}</text>
+        <text x="330" y="60">{plate === 'front' ? 'Left' : 'Right'}</text>
+      </g>
+    )}
+    <g class="markers">
+      {markers.map((m) => {
+        const s = byN.get(m.n)!;
+        return (
+          <g
+            class:list={['mk', `d${m.depth}`, { focus: focus === m.n }]}
+            data-n={m.n}
+            data-side={m.side}
+            data-x={m.x}
+            data-lens-only={m.lens}
+            transform={`translate(${m.x} ${m.y})`}
+            tabindex={interactive && m.side === 'a' ? 0 : undefined}
+            role={interactive ? 'button' : undefined}
+            aria-label={interactive ? `${m.n}, ${s.name}, ${s.where}` : undefined}
+          >
+            <circle class="mk-halo" r={r * 1.9} />
+            <circle class="mk-ring" r={r * 1.35} />
+            <circle class="mk-core" r={r} />
+            <text class="mk-num" dy=".36em">{m.n}</text>
+          </g>
+        );
+      })}
+    </g>
+  </svg>
+  {label && <figcaption>{label}</figcaption>}
+</figure>
+
+<style>
+  .fig-fill { fill: var(--body-fill); }
+  .fig-shade { fill: var(--fig-shade); opacity: var(--fig-shade-o); }
+  .fig-lines { fill: var(--ink-2); }
+  .plate { margin: 0; position: relative; display: flex; flex-direction: column; align-items: center; }
+  .plate svg { width: 100%; height: 100%; overflow: visible; display: block; }
+  figcaption {
+    font: 600 .66rem/1.2 var(--sans); letter-spacing: .16em; text-transform: uppercase;
+    color: var(--ink-3); margin-top: 6px; text-align: center;
+  }
+  .silhouette { stroke: var(--body-line); stroke-width: 1.3; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+  .hint { fill: none; stroke: var(--body-hint); stroke-width: .9; opacity: .32; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+  .vert { fill: var(--body-hint); opacity: .32; }
+
+  .silhouette { filter: var(--body-shadow); }
+
+  /* The Main Central current: a faint bed of colour and a light travelling along it,
+     down the front and up the back. */
+  .current path { fill: none; stroke: var(--seal); stroke-linecap: round; }
+  .cur-bed { stroke-width: 10; opacity: .07; }
+  .cur-glow { stroke-width: 16; opacity: .14; stroke-dasharray: 14 86; animation: travel 5s linear infinite; }
+  .cur-pulse { stroke-width: 5; opacity: .7; stroke-dasharray: 5 95; animation: travel 5s linear infinite; }
+  @keyframes travel { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
+  @media (prefers-reduced-motion: reduce) { .cur-glow, .cur-pulse { animation: none; stroke-dasharray: none; opacity: .2; } }
+
+  /* markers */
+  .sides text { font: 600 13px/1 var(--sans); letter-spacing: .14em; text-transform: uppercase; fill: var(--ink-3); text-anchor: middle; }
+  .mk { --d: var(--ink-3); cursor: pointer; outline: none; transition: opacity .35s var(--ease); }
+  .mk.d1 { --d: var(--d1); } .mk.d2 { --d: var(--d2); } .mk.d3 { --d: var(--d3); } .mk.d4 { --d: var(--d4); } .mk.d5 { --d: var(--d5); }
+  .mk-halo { fill: var(--d); opacity: 0; transition: opacity .3s, transform .4s var(--ease); transform: scale(.6); }
+  .mk-ring { fill: none; stroke: var(--d); stroke-width: 1; opacity: .45; vector-effect: non-scaling-stroke; transition: opacity .3s, transform .4s var(--ease); }
+  .mk-core { fill: var(--d); stroke: var(--paper); stroke-width: 1.5; vector-effect: non-scaling-stroke; transition: transform .35s var(--ease); }
+  .mk-num {
+    fill: var(--paper); font: 650 13.5px/1 var(--sans); text-anchor: middle; pointer-events: none;
+    font-variant-numeric: tabular-nums; letter-spacing: -.02em;
+  }
+  .plate-sole .mk-num, .plate-medial .mk-num, .plate-lateral .mk-num { font-size: 10.5px; }
+  .mk > * { transform-box: fill-box; transform-origin: center; }
+
+  .mk:hover .mk-halo, .mk:focus-visible .mk-halo, .mk.is-hover .mk-halo { opacity: .18; transform: scale(1); }
+  .mk:hover .mk-core, .mk.is-hover .mk-core { transform: scale(1.12); }
+  .mk:focus-visible .mk-ring { opacity: 1; stroke-width: 2; }
+
+  .mk.is-active .mk-halo, .mk.focus .mk-halo { opacity: .28; transform: scale(1.1); animation: breathe 3.2s ease-in-out infinite; }
+  .mk.is-active .mk-core, .mk.focus .mk-core { transform: scale(1.25); }
+  .mk.is-active .mk-ring, .mk.focus .mk-ring { opacity: .9; }
+  .mk.is-related .mk-ring { opacity: .95; stroke-dasharray: 2 3; }
+
+  :global(.dimmed) .mk:not(.is-active):not(.is-related):not(.is-match):not(.is-hover):not(.focus) { opacity: .22; }
+  .mk.is-match .mk-ring { opacity: 1; }
+
+
+  @keyframes breathe { 0%, 100% { transform: scale(1); opacity: .28; } 50% { transform: scale(1.35); opacity: .12; } }
+</style>

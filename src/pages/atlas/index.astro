@@ -1,0 +1,8 @@
+---
+import Base from '../../layouts/Base.astro';
+import Atlas from '../../components/Atlas.astro';
+import { sels, depths } from '../../data';
+---
+<Base title="Atlas" description="An interactive map of the 26 Safety Energy Locks of Jin Shin Jyutsu: tap a place to see its name, depth, finger and the holds that use it.">
+  <Atlas sels={sels} depths={depths} />
+</Base>

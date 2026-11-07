@@ -1,0 +1,693 @@
+---
+import { selText } from '../lib/search';
+import Plate from './Plate.astro';
+import SelDetail from './SelDetail.astro';
+import Term from './Term.astro';
+import type { Sel, DepthInfo } from '../data/types';
+
+interface Props { sels: Sel[]; depths: DepthInfo[] }
+const { sels, depths } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+const searchIndex = sels.map((s) => ({ n: s.n, text: selText(s) }));
+const relatedMap = Object.fromEntries(sels.map((s) => [s.n, s.related.map((r) => r.n)]));
+---
+<section class="atlas" data-atlas>
+  <div class="stage" data-stage>
+    <div class="toolbar">
+      <div class="view-toggle" role="group" aria-label="Choose view">
+        <span class="vt-k">View</span>
+        <div class="vt-seg">
+          <button type="button" data-view="front" class="is-on" aria-pressed="true">Front</button>
+          <button type="button" data-view="back" aria-pressed="false">Back</button>
+          <button type="button" data-view="feet" aria-pressed="false">Feet</button>
+        </div>
+      </div>
+      <div class="depth-filter" role="group" aria-label="Filter by depth">
+        <a class="df-k" href={`${base}/depths/`} title="What the colours mean">Depths</a>
+        <button type="button" class="df df-all is-on" data-depth="all" aria-pressed="true">All</button>
+        {depths.map((d) => (
+          <button type="button" class:list={['df', `d${d.n}`]} data-depth={d.n} aria-pressed="false" aria-label={`${d.name}, ${d.layer}`} title={`${d.name}: ${d.sels[0]}–${d.sels.at(-1)} · ${d.organs.join(' & ')}`}>
+            <span class="dot" /><span class="df-n">{d.n}</span><span class="df-l">{d.layer.replace('Surface skin', 'Skin')}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+    <p class="df-say">
+      <span data-say="all">Tap a depth to see its <Term plural short />.</span>
+      {depths.map((d) => (
+        <span class={`d${d.n}`} data-say={d.n} hidden>
+          <a href={`${base}/depths/#depth-${d.n}`}><b>{d.name}</b></a> · {d.layer} · {d.organs.join(' & ')} · {d.sels.length > 1 ? <><Term plural short /> {d.sels[0]}–{d.sels.at(-1)}</> : <><Term short /> {d.sels[0]}</>}
+        </span>
+      ))}
+    </p>
+
+    <div class="plates" data-view="front">
+      <div class="fig fig-front">
+        <div class="fig-head">
+          <span class="eyebrow fig-side">Front</span>
+          <a class="energy" href={`${base}/glossary/#term-ascending-descending`} title="Down the front, on the out-breath">Descending energy <span aria-hidden="true">↓</span></a>
+        </div>
+        <Plate plate="front" sels={sels} currents sides label="" />
+      </div>
+      <div class="fig fig-back">
+        <div class="fig-head">
+          <span class="eyebrow fig-side">Back</span>
+          <a class="energy" href={`${base}/glossary/#term-ascending-descending`} title="Up the back, on the in-breath">Ascending energy <span aria-hidden="true">↑</span></a>
+        </div>
+        <Plate plate="back" sels={sels} currents sides label="" />
+      </div>
+      <div class="feet">
+        <div class="fig-head"><span class="eyebrow">Feet</span></div>
+        <Plate plate="medial" sels={sels} label="Inner foot" />
+        <Plate plate="lateral" sels={sels} label="Outer foot" />
+        <Plate plate="sole" sels={sels} label="Sole" class="sole" />
+      </div>
+    </div>
+
+    <div class="tip" data-tip hidden>
+      <span class="tip-n" data-tip-n></span>
+      <span class="tip-body"><strong data-tip-name></strong><span data-tip-where></span></span>
+    </div>
+    <!-- Narrow screens, before any choice: say what the numbers are, and offer the list below. -->
+    <button type="button" class="peek hint" data-hint>
+      <span class="hint-n" aria-hidden="true">26</span>
+      <span class="tip-body"><strong>Tap a number</strong><span>Each is a place where energy gathers.</span></span>
+      <span class="peek-go" aria-hidden="true">↓</span>
+    </button>
+    <!-- Narrow screens: the chosen lock's name floats over the figure; tapping it drops to the detail below. -->
+    <button type="button" class="peek" data-peek hidden>
+      <span class="tip-n" data-peek-n></span>
+      <span class="tip-body"><strong data-peek-name></strong><span data-peek-where></span></span>
+      <span class="peek-go" aria-hidden="true">↓</span>
+    </button>
+  </div>
+
+  <p class="sr-only" role="status" data-status></p>
+  <aside class="panel" data-panel>
+    <div class="panel-index" data-index>
+      <header class="panel-head">
+        <p class="eyebrow">The twenty-six</p>
+        <h1 class="panel-title"><span data-lens-only="jsj"><Term plural cap /></span></h1>
+        <p class="lede" data-lens-only="jsj">
+          Places where the body’s energy gathers, and can lock shut. Rest a hand on one and the current moves again. Each is mirrored, left and right.
+          Pick one on the body, or search by what you notice.
+        </p>
+        <label class="search">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.6" /><path d="M16 16l4.5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg>
+          <input type="search" placeholder="Try “breath”, “knee”, “fear”, 15…" data-search aria-label="Search" />
+        </label>
+      </header>
+      <div class="index-list" data-list>
+        {depths.map((d) => (
+          <section class:list={['group', `d${d.n}`]} data-group={d.n}>
+            <header class="group-head">
+              <span class="group-n">{d.n}</span>
+              <span>
+                <span class="group-name">{d.name} · {d.layer}</span>
+                <span class="group-sub">{d.organs.join(' & ')}</span>
+              </span>
+            </header>
+            <ol class="rows">
+              {d.sels.map((n) => {
+                const s = sels.find((x) => x.n === n)!;
+                return (
+                  <li>
+                    <a class="row" href={`${base}/lock/${n}/`} data-n={n}>
+                      <span class="row-n">{n}</span>
+                      <span class="row-text">
+                        <span class="row-name">{s.name}</span>
+                        <span class="row-where" data-where-jsj={s.where}>
+                          {s.where}
+                        </span>
+                      </span>
+                    </a>
+                  </li>
+                );
+              })}
+            </ol>
+          </section>
+        ))}
+        <div class="no-match" data-nomatch hidden>
+          <p data-nm-say></p>
+          <p class="nm-try" data-nm-all hidden><button type="button">Search every depth</button></p>
+          <p class="nm-try" data-nm-words>{['breath', 'sleep', 'worry', 'neck', 'digestion', '15'].map((w) => <button type="button" data-try={w}>{w}</button>)}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-detail" data-detail tabindex="-1" hidden>
+      <div class="detail-nav">
+        <button type="button" class="back" data-close>
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" /></svg>
+          All <Term plural short />
+        </button>
+        <span class="step">
+          <button type="button" data-step="-1" aria-label="Previous lock">‹</button>
+          <button type="button" data-step="1" aria-label="Next lock">›</button>
+        </span>
+      </div>
+      {sels.map((s) => (
+        <article class="detail" data-detail-n={s.n} hidden>
+          <SelDetail sel={s} depth={depths.find((d) => d.n === s.depth)!} sels={sels} compact />
+        </article>
+      ))}
+    </div>
+  </aside>
+</section>
+
+<script define:vars={{ searchIndex, relatedMap }} is:inline>
+  window.__atlas = { searchIndex, relatedMap };
+</script>
+
+<script>
+  type W = Window & { __atlas: { searchIndex: { n: number; text: string }[]; relatedMap: Record<number, number[]> } };
+  const { searchIndex, relatedMap } = (window as unknown as W).__atlas;
+
+  const root = document.querySelector<HTMLElement>('[data-atlas]')!;
+  const stage = root.querySelector<HTMLElement>('[data-stage]')!;
+  const plates = root.querySelector<HTMLElement>('.plates')!;
+  const marks = [...root.querySelectorAll<SVGGElement>('.plates .mk')];
+  const rows = [...root.querySelectorAll<HTMLAnchorElement>('a.row')];
+  const groups = [...root.querySelectorAll<HTMLElement>('[data-group]')];
+  const index = root.querySelector<HTMLElement>('[data-index]')!;
+  const detail = root.querySelector<HTMLElement>('[data-detail]')!;
+  const details = [...root.querySelectorAll<HTMLElement>('[data-detail-n]')];
+  const tip = root.querySelector<HTMLElement>('[data-tip]')!;
+  const peek = root.querySelector<HTMLButtonElement>('[data-peek]')!;
+  const hint = root.querySelector<HTMLButtonElement>('[data-hint]')!;
+  const panel = root.querySelector<HTMLElement>('[data-panel]')!;
+  const status = root.querySelector<HTMLElement>('[data-status]')!;
+  const narrow = matchMedia('(max-width: 920px)');
+  hint.addEventListener('click', () => panel.scrollIntoView({ behavior: 'smooth' }));
+  const [hintNum, hintHead, hintSub] = [hint.querySelector('.hint-n')!, hint.querySelector('strong')!, hint.querySelector('.tip-body span')!];
+  const search = root.querySelector<HTMLInputElement>('[data-search]')!;
+  const noMatch = root.querySelector<HTMLElement>('[data-nomatch]')!;
+  const [nmSay, nmAll, nmWords] = ['say', 'all', 'words'].map((k) => noMatch.querySelector<HTMLElement>(`[data-nm-${k}]`)!);
+  const names = new Map(rows.map((r) => [+r.dataset.n!, {
+    name: r.querySelector('.row-name')!.firstChild!.textContent!,
+    where: r.querySelector<HTMLElement>('.row-where')!.dataset,
+    depth: [...r.closest('[data-group]')!.classList].find((c) => /^d\d$/.test(c))!,
+  }]));
+
+  let active: number | null = null;
+  let depthFilter: string = 'all';
+  let matches: Set<number> | null = null;
+  let pushed = false; // an open lock holds a history entry of its own, so Back returns to the list
+
+  const lens = () => document.documentElement.dataset.lens ?? 'jsj';
+  const inLens = (el: HTMLElement | SVGElement) => !el.dataset.lensOnly || el.dataset.lensOnly.split(' ').includes(lens());
+  const marksFor = (n: number) => marks.filter((m) => +m.dataset.n! === n && inLens(m));
+  const viewOf = (m: Element) => {
+    const p = m.closest<HTMLElement>('[data-plate]')?.dataset.plate;
+    return p === 'front' || p === 'back' ? p : 'feet';
+  };
+  // The locks the depth and search leave showing, in order.
+  const shown = () => rows.filter((r) => !r.parentElement!.hidden).map((r) => +r.dataset.n!).sort((a, b) => a - b);
+  const notTouch = (e: PointerEvent) => e.pointerType !== 'touch'; // a tap has the peek card; a finger scrolling the list should not fire hovers
+
+  function paint() {
+    const related = new Set(active ? relatedMap[active] ?? [] : []);
+    const depthSet = depthFilter === 'all' ? null : new Set(
+      rows.filter((r) => r.closest(`[data-group="${depthFilter}"]`)).map((r) => +r.dataset.n!),
+    );
+    for (const m of marks) {
+      const n = +m.dataset.n!;
+      m.classList.toggle('is-active', n === active);
+      m.classList.toggle('is-related', related.has(n));
+      const inDepth = !depthSet || depthSet.has(n);
+      const inSearch = !matches || matches.has(n);
+      m.classList.toggle('is-match', !!(matches || depthSet) && inDepth && inSearch);
+    }
+    stage.classList.toggle('dimmed', !!(active || matches || depthSet));
+    for (const r of rows) {
+      const n = +r.dataset.n!;
+      r.classList.toggle('is-active', n === active);
+      const show = (!depthSet || depthSet.has(n)) && (!matches || matches.has(n));
+      r.parentElement!.hidden = !show;
+    }
+    let any = false;
+    for (const g of groups) {
+      const vis = [...g.querySelectorAll('li')].some((li) => !li.hidden);
+      g.hidden = !vis;
+      any ||= vis;
+    }
+    noMatch.hidden = any;
+    const q = search.value.trim();
+    const depthName = depthSet ? root.querySelector(`[data-say="${depthFilter}"] b`)!.textContent! : '';
+    // A word found elsewhere is the depth's doing, not the word's: say so, and offer the way out.
+    const elsewhere = !!(depthSet && matches?.size);
+    nmSay.textContent = elsewhere ? `The ${depthName} doesn’t mention “${q}”.` : 'Nothing mentions that. Try a body area, a feeling, or a number:';
+    nmAll.hidden = !elsewhere;
+    nmWords.hidden = elsewhere;
+    // Narrow screens put the results below the figure, so the card says what was found.
+    const filtered = !!(matches || depthSet), found = filtered ? shown().length : 26;
+    hintNum.textContent = String(found);
+    hintHead.textContent = !filtered ? 'Tap a number' : found === 1 ? 'One lock matches' : found ? `${found} locks match` : 'Nothing matches';
+    hintSub.textContent = filtered ? `${[q && `“${q}”`, depthName].filter(Boolean).join(' in the ')}. See the list below.` : 'Each is a place where energy gathers.';
+    hint.hidden = !!active;
+    status.textContent = active ? `Lock ${active}, ${names.get(active)!.name}` : filtered ? `${found} of 26 locks shown` : '';
+  }
+
+  // One view at a time on a phone: if nothing showing is on this side, turn to a side that has some.
+  function ensureView() {
+    const on = new Set(shown());
+    const hits = marks.filter((m) => on.has(+m.dataset.n!) && inLens(m));
+    if (on.size < 26 && hits.length && !hits.some((m) => viewOf(m) === plates.dataset.view)) setView(viewOf(hits[0]));
+  }
+
+  function open(n: number, { push = true, reveal = true, focus = true } = {}) {
+    const was = active;
+    active = n;
+    for (const d of details) d.hidden = +d.dataset.detailN! !== n;
+    index.hidden = true;
+    detail.hidden = false;
+    detail.scrollTop = 0;
+    root.classList.add('has-detail');
+    // make sure the lock is visible on narrow screens, staying on this side if it is here too
+    const ms = marksFor(n), m = ms.find((x) => viewOf(x) === plates.dataset.view) ?? ms[0];
+    if (m) setView(viewOf(m));
+    if (push && was === null) {
+      history.scrollRestoration = 'manual'; // Back closes the lock, and close() places the page
+      history.pushState(null, '', `#lock-${n}`);
+      pushed = true;
+    } else if (push) history.replaceState(history.state, '', `#lock-${n}`);
+    const info = names.get(n)!;
+    peek.querySelector('[data-peek-n]')!.textContent = String(n);
+    peek.querySelector('[data-peek-name]')!.textContent = info.name;
+    peek.querySelector('[data-peek-where]')!.textContent = info.where.whereJsj ?? '';
+    peek.className = `peek ${info.depth}`;
+    peek.hidden = false;
+    paint();
+    // The list above is gone or replaced, so without this a phone lands somewhere inside the detail.
+    if (reveal && narrow.matches) panel.scrollIntoView({ behavior: 'instant', block: 'start' });
+    if (focus) detail.focus({ preventScroll: true });
+  }
+
+  function close({ restore = true, rewind = true } = {}) {
+    if (active === null) return;
+    const n = active;
+    const reading = !narrow.matches || panel.getBoundingClientRect().top < innerHeight / 2;
+    active = null;
+    index.hidden = false;
+    detail.hidden = true;
+    root.classList.remove('has-detail');
+    peek.hidden = true;
+    if (pushed && rewind) history.back();
+    else if (location.hash) history.replaceState(history.state, '', location.pathname + location.search);
+    pushed = false;
+    paint();
+    // Back to the row it was opened from, not to wherever the detail had scrolled.
+    const row = rows.find((r) => +r.dataset.n! === n)!;
+    if (restore && reading && !row.parentElement!.hidden) {
+      row.scrollIntoView({ behavior: 'instant', block: narrow.matches ? 'center' : 'nearest' });
+      if (!narrow.matches) row.focus({ preventScroll: true }); // a ring has no use on a touch screen
+    }
+  }
+
+  function setView(v: string) {
+    plates.dataset.view = v;
+    tip.hidden = true;
+    for (const b of root.querySelectorAll<HTMLButtonElement>('button[data-view]')) {
+      b.classList.toggle('is-on', b.dataset.view === v);
+      b.setAttribute('aria-pressed', String(b.dataset.view === v));
+    }
+  }
+
+  // hover tooltip + cross-highlight
+  function hover(n: number | null, anchor?: Element) {
+    for (const m of marks) m.classList.toggle('is-hover', n !== null && +m.dataset.n! === n);
+    for (const r of rows) r.classList.toggle('is-hover', n !== null && +r.dataset.n! === n);
+    if (n === null || !anchor) { tip.hidden = true; return; }
+    const info = names.get(n)!;
+    tip.querySelector('[data-tip-n]')!.textContent = String(n);
+    tip.querySelector('[data-tip-name]')!.textContent = info.name;
+    tip.querySelector('[data-tip-where]')!.textContent = info.where.whereJsj ?? '';
+    tip.className = `tip ${info.depth}`;
+    const a = anchor.getBoundingClientRect();
+    const s = stage.getBoundingClientRect();
+    tip.hidden = false;
+    const tw = tip.offsetWidth;
+    let x = a.left + a.width / 2 - s.left - tw / 2;
+    x = Math.max(8, Math.min(x, s.width - tw - 8));
+    tip.style.left = `${x}px`; tip.style.top = `${a.top - s.top - tip.offsetHeight - 6}px`;
+  }
+
+  for (const m of marks) {
+    const n = +m.dataset.n!;
+    const toggle = () => (active === n ? close({ restore: false }) : open(n, { reveal: false, focus: false }));
+    m.addEventListener('pointerenter', (e) => { if (notTouch(e)) hover(n, m); });
+    m.addEventListener('pointerleave', (e) => { if (notTouch(e)) hover(null); });
+    m.addEventListener('click', toggle);
+    m.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+    });
+  }
+  for (const r of rows) {
+    const n = +r.dataset.n!;
+    r.addEventListener('pointerenter', (e) => {
+      if (!notTouch(e)) return;
+      const m = marksFor(n).find((x) => x.getBoundingClientRect().width > 0);
+      hover(n, m);
+    });
+    r.addEventListener('pointerleave', (e) => { if (notTouch(e)) hover(null); });
+    r.addEventListener('click', (e) => {
+      if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+      e.preventDefault();
+      open(n);
+    });
+  }
+  root.addEventListener('click', (e) => {
+    const t = (e.target as Element).closest<HTMLElement>('[data-goto]');
+    if (t) { e.preventDefault(); open(+t.dataset.goto!); }
+  });
+
+  root.querySelector('[data-close]')!.addEventListener('click', () => close());
+  // Next and previous walk what the filter left showing, so stepping never leaves it.
+  const step = (dir: number) => {
+    const a = active ?? 0, on = shown(), pool = on.length ? on : rows.map((r) => +r.dataset.n!).sort((x, y) => x - y);
+    open((dir > 0 ? pool.find((n) => n > a) ?? pool[0] : pool.findLast((n) => n < a) ?? pool.at(-1))!, { focus: false });
+  };
+  for (const b of root.querySelectorAll<HTMLButtonElement>('[data-step]')) b.addEventListener('click', () => step(+b.dataset.step!));
+  function setDepth(d: string) {
+    depthFilter = d;
+    for (const x of root.querySelectorAll<HTMLButtonElement>('.df')) {
+      x.classList.toggle('is-on', x.dataset.depth === d);
+      x.setAttribute('aria-pressed', String(x.dataset.depth === d));
+    }
+    for (const x of root.querySelectorAll<HTMLElement>('[data-say]')) x.hidden = x.dataset.say !== d;
+    // A depth chip always shows its locks, so it closes any open lock.
+    if (active) close({ restore: false }); else paint();
+    ensureView();
+  }
+  for (const b of root.querySelectorAll<HTMLButtonElement>('.df')) {
+    b.addEventListener('click', () => {
+      const d = b.dataset.depth!;
+      // All means every lock, so it clears a search too; a depth tapped again lets go of it.
+      if (d === 'all' && matches) { search.value = ''; applySearch(); }
+      setDepth(d === depthFilter ? 'all' : d);
+    });
+  }
+  for (const b of root.querySelectorAll<HTMLButtonElement>('button[data-view]')) {
+    b.addEventListener('click', () => setView(b.dataset.view!));
+  }
+
+  function applySearch() {
+    const q = search.value.trim().toLowerCase();
+    if (!q) matches = null;
+    else if (/^\d{1,2}$/.test(q)) matches = new Set([+q]);
+    else {
+      const terms = q.split(/\s+/);
+      matches = new Set(searchIndex.filter((s) => terms.every((t) => s.text.includes(t))).map((s) => s.n));
+    }
+    // A ?q= the page arrived with stops being true once the words change.
+    const u = new URLSearchParams(location.search);
+    if (u.has('q') && u.get('q') !== search.value.trim()) {
+      u.delete('q');
+      history.replaceState(history.state, '', location.pathname + (`${u}` ? `?${u}` : '') + location.hash);
+    }
+    paint();
+    ensureView();
+  }
+  search.addEventListener('input', applySearch);
+  // The empty state offers words that are known to find something.
+  for (const b of root.querySelectorAll<HTMLButtonElement>('[data-try]')) b.addEventListener('click', () => {
+    search.value = b.dataset.try!;
+    setDepth('all');
+    applySearch();
+    search.focus();
+  });
+  nmAll.querySelector('button')!.addEventListener('click', () => setDepth('all'));
+  search.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    // On a phone the list is the answer: the Search key puts the keyboard away so it can be read.
+    const on = shown();
+    if (matches && on.length && (on.length === 1 || !narrow.matches)) open(on[0]);
+    else if (narrow.matches) search.blur();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return; // Alt+Left is the browser's Back
+    if (document.querySelector('dialog[open], [popover]:popover-open, .cites.open')) return; // Escape and the arrows belong to what is on top
+    const el = e.target as HTMLElement;
+    if (el === search) {
+      if (e.key === 'Escape') { search.value = ''; applySearch(); search.blur(); }
+      return;
+    }
+    if (el.matches('input, textarea, select')) return;
+    if (e.key === 'Escape' && active) close();
+    if (e.key === '/') { e.preventDefault(); close({ restore: false }); search.focus(); }
+    if (active && e.key === 'ArrowRight') { e.preventDefault(); step(1); }
+    if (active && e.key === 'ArrowLeft') { e.preventDefault(); step(-1); }
+  });
+
+
+  const fromHash = (reveal: boolean) => {
+    const m = location.hash.match(/^#lock-(\d{1,2})$/);
+    if (m && +m[1] >= 1 && +m[1] <= 26) open(+m[1], { push: false, reveal, focus: false });
+    else close({ rewind: false }); // Back, from an open lock
+  };
+  peek.addEventListener('click', () => panel.scrollIntoView({ behavior: 'smooth' }));
+  fromHash(false);
+  addEventListener('hashchange', () => fromHash(true));
+  addEventListener('pagehide', () => { history.scrollRestoration = 'auto'; }); // the rest of the site keeps the browser's own
+  // A reload or Back can restore the words in the box without their results.
+  addEventListener('pageshow', () => { if (search.value.trim() && !matches) applySearch(); });
+  // A lock page's theme chips arrive as ?q=, already searched.
+  const q0 = new URLSearchParams(location.search).get('q');
+  if (q0 && !location.hash) { search.value = q0; applySearch(); }
+  // Inside the panel the same chips filter in place rather than reloading the page.
+  detail.addEventListener('click', (e) => {
+    const a = (e.target as Element).closest<HTMLAnchorElement>('a.theme');
+    if (!a || e.metaKey || e.ctrlKey || e.shiftKey) return;
+    e.preventDefault();
+    close({ restore: false });
+    search.value = new URL(a.href).searchParams.get('q') ?? '';
+    setDepth('all');
+    applySearch();
+    index.scrollTop = 0;
+    if (narrow.matches) panel.scrollIntoView({ behavior: 'instant', block: 'start' });
+  });
+  paint();
+</script>
+
+<style>
+  .atlas {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 410px;
+    grid-template-rows: minmax(0, 1fr);
+    height: calc(100svh - 64px);
+    min-height: 640px;
+  }
+
+  /* ── stage ── */
+  .stage { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0; padding: 18px clamp(12px, 2vw, 32px) 18px; }
+  /* Always one line, so choosing a depth never moves the figure. */
+  .df-say { margin: 8px 0 0; font-size: .84rem; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .df-say b { color: var(--d); font-weight: 600; }
+  .df-say a { text-decoration: underline dotted; text-underline-offset: 3px; text-decoration-color: var(--d); }
+  .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .depth-filter, .view-toggle { display: flex; gap: 6px; flex-wrap: wrap; }
+  .toolbar :global(.tb-lens) { flex: none; }
+  .depth-filter { align-items: center; gap: 6px; }
+  @media (max-width: 420px) { .df-say { font-size: .76rem; white-space: normal; } }
+  /* The depth filter doubles as the colour key: a dot per depth, its layer beneath. */
+  /* Names the row, so a newcomer reads the colours as depths, and links to what a depth is. */
+  .df-k {
+    align-self: center; margin-right: 8px; font: 600 .6rem/1 var(--sans); letter-spacing: .16em; text-transform: uppercase;
+    color: var(--ink-3); text-decoration: none; padding-bottom: 2px;
+  }
+  .df-k:hover { color: var(--seal); }
+  .df {
+    font: 500 .7rem/1 var(--sans); color: var(--ink-3); background: none; border: 0; cursor: pointer;
+    display: inline-flex; flex-direction: column; align-items: center; gap: 4px; padding: 4px 6px;
+    transition: color .2s var(--ease), opacity .2s var(--ease); -webkit-tap-highlight-color: transparent;
+  }
+  .df .dot { color: var(--d); width: 12px; height: 12px; transition: box-shadow .2s var(--ease), transform .2s var(--ease); }
+  @media (min-width: 521px) { .df-n { display: none; } }
+  .df-n { font-variant-numeric: tabular-nums; }
+  .df-all { font: 500 .78rem/1 var(--sans); color: var(--ink-2); padding: 8px 10px; border-radius: 99px; }
+  .df:hover { color: var(--ink); }
+  .df:hover .dot { transform: scale(1.15); }
+  .df.is-on { color: var(--ink); }
+  .df.is-on .dot { box-shadow: 0 0 0 2px var(--paper), 0 0 0 3.5px var(--d); }
+  .df-all.is-on { background: var(--ink); color: var(--paper); }
+  .depth-filter:has(.df.is-on:not(.df-all)) .df:not(.is-on):not(.df-all) { opacity: .45; }
+  /* Views take turns only on narrower screens: one control, so they read as a set apart from the depths. */
+  .view-toggle { display: none; flex: none; align-items: center; gap: 8px; flex-wrap: nowrap; }
+  .vt-k { font: 600 .6rem/1 var(--sans); letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3); padding-bottom: 3px; }
+  .vt-seg { display: flex; gap: 2px; padding: 2px; border-radius: 9px; background: color-mix(in oklab, var(--ink) 9%, transparent); }
+  .vt-seg button {
+    position: relative; height: 28px; padding: 0 9px; border: 0; border-radius: 7px; background: none; cursor: pointer;
+    font: 500 .78rem/1 var(--sans); color: var(--ink-2); transition: color .2s, background .2s; -webkit-tap-highlight-color: transparent;
+  }
+  .vt-seg button:hover { color: var(--ink); }
+  .vt-seg button.is-on { background: var(--ink); color: var(--paper); }
+  .vt-seg button::after { content: ''; position: absolute; inset: -8px -1px; } /* a finger-sized target */
+  /* On a phone each group sits under its label, and the depths become numbered buttons. */
+  @media (max-width: 700px) {
+    .toolbar { flex-wrap: nowrap; align-items: flex-start; gap: 12px; }
+    .view-toggle { flex-direction: column; align-items: flex-start; gap: 6px; }
+    .vt-k { padding-bottom: 2px; }
+    .df-say { text-align: center; }
+    .depth-filter { display: grid; grid-template-columns: auto repeat(5, 26px); grid-template-rows: auto 32px; align-items: center; gap: 6px 4px; flex: none; }
+    .df-k { grid-column: 1 / -1; justify-self: start; margin: 0; }
+    .df .dot, .df-l { display: none; }
+    .df-n { display: inline; }
+    .df { position: relative; padding: 0; justify-content: center; height: 26px; }
+    .df:not(.df-all) { aspect-ratio: 1; border-radius: 50%; background: var(--d); font: 600 .78rem/1 var(--sans); }
+    .df:not(.df-all), .df:not(.df-all):hover, .df:not(.df-all).is-on { color: var(--paper); }
+    .df:not(.df-all).is-on { box-shadow: 0 0 0 1.5px var(--paper), 0 0 0 3px var(--d); }
+    .df-all { padding: 0 7px; font-size: .74rem; box-shadow: inset 0 0 0 1px var(--rule); }
+    .df-all.is-on { box-shadow: none; }
+    .df::after { content: ''; position: absolute; inset: -9px -2px; }
+  }
+  @media (max-width: 350px) {
+    .toolbar { gap: 8px; }
+    .vt-seg button { padding-inline: 6px; font-size: .72rem; }
+    .depth-filter { grid-template-columns: auto repeat(5, 22px); column-gap: 3px; }
+    .df { height: 22px; }
+    .df:not(.df-all) { font-size: .7rem; }
+    .df-all { padding-inline: 5px; font-size: .68rem; }
+  }
+
+  .plates {
+    flex: 1; min-height: 0; display: grid;
+    grid-template-columns: 1fr 1fr minmax(120px, .42fr);
+    grid-template-rows: minmax(0, 1fr);
+    gap: clamp(8px, 2vw, 28px); align-items: stretch; padding-top: 14px;
+  }
+  .fig { display: flex; flex-direction: column; min-height: 0; }
+  .fig :global(.plate) { flex: 1; min-height: 0; }
+  .fig :global(.plate svg) { height: 100%; width: 100%; }
+  .fig-head { display: flex; flex-direction: column; align-items: center; gap: 2px; margin-bottom: 6px; }
+  .energy { font: italic 500 1.02rem/1.2 var(--serif); color: var(--seal); text-decoration: underline dotted color-mix(in oklab, var(--seal) 50%, transparent); text-underline-offset: 3px; }
+  .energy:hover { text-decoration-style: solid; }
+  .feet { display: flex; flex-direction: column; justify-content: center; gap: 10px; min-height: 0; }
+  .feet :global(.plate) { min-height: 0; }
+  .feet :global(.plate svg) { max-height: 22vh; }
+  .feet :global(.sole svg) { max-height: 26vh; }
+
+  .tip {
+    position: absolute; left: 0; top: 0; z-index: 5; pointer-events: none;
+    display: flex; align-items: center; gap: 7px; padding: 4px 10px 4px 4px; border-radius: 99px;
+    background: color-mix(in srgb, var(--paper) 88%, transparent); backdrop-filter: blur(6px);
+    border: 1px solid var(--rule); max-width: 240px; white-space: nowrap;
+    animation: tip-in .22s ease-out;
+  }
+  @keyframes tip-in { from { opacity: 0; } }
+  .tip.d1 { --d: var(--d1); } .tip.d2 { --d: var(--d2); } .tip.d3 { --d: var(--d3); } .tip.d4 { --d: var(--d4); } .tip.d5 { --d: var(--d5); }
+  .tip-n { flex: none; width: 20px; height: 20px; border-radius: 50%; background: var(--d); color: var(--paper); display: grid; place-items: center; font: 650 .66rem/1 var(--sans); }
+  .tip-body { display: flex; flex-direction: column; line-height: 1.25; }
+  .tip-body strong { font: 500 .98rem/1.1 var(--serif); }
+  .tip-body span { display: none; }
+  .tip[hidden] { display: none; }
+  @keyframes pop { from { opacity: 0; transform: translateY(4px); } }
+
+  /* ── panel ── */
+  .panel {
+    border-left: 1px solid var(--rule); background: color-mix(in oklab, var(--card) 70%, transparent);
+    overflow: hidden; display: flex; flex-direction: column; min-height: 0;
+  }
+  .panel-index, .panel-detail { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+  .panel-head { padding: 26px 26px 14px; position: sticky; top: 0; z-index: 2; background: linear-gradient(var(--card) 82%, transparent); }
+  .panel-title { font-size: 2.3rem; margin: 4px 0 10px; }
+  .lede { color: var(--ink-2); font-size: .92rem; line-height: 1.55; margin-bottom: 16px; }
+  .search {
+    display: flex; align-items: center; gap: 10px; padding: 0 14px; height: 42px; border-radius: 12px;
+    background: var(--paper); border: 1px solid var(--rule); color: var(--ink-3);
+  }
+  .search:focus-within { border-color: var(--seal); box-shadow: 0 0 0 3px var(--seal-soft); }
+  .search input { flex: 1; border: 0; background: transparent; font: 400 .92rem var(--sans); color: var(--ink); outline: none; min-width: 0; }
+
+  .index-list { padding: 0 14px 28px; }
+  .group { margin-top: 14px; }
+  .group-head { display: flex; align-items: center; gap: 12px; padding: 8px 12px; }
+  .group-n {
+    width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid var(--d); color: var(--d);
+    display: grid; place-items: center; font: 600 .95rem/1 var(--serif); flex: none;
+  }
+  .group-name { display: block; font: 600 .72rem/1.2 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--d); }
+  .group-sub { display: block; font-size: .78rem; color: var(--ink-3); }
+  .rows { list-style: none; margin: 0; padding: 0; }
+  .row {
+    display: flex; align-items: center; gap: 14px; padding: 8px 12px; border-radius: 10px; text-decoration: none;
+    transition: background .15s;
+  }
+  .row:hover, .row.is-hover { background: var(--paper-2); }
+  .row.is-active { background: color-mix(in oklab, var(--d) 14%, transparent); }
+  .row-n {
+    flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--d); color: var(--paper);
+    display: grid; place-items: center; font: 650 .8rem/1 var(--sans); font-variant-numeric: tabular-nums;
+  }
+  .row-text { display: flex; flex-direction: column; min-width: 0; }
+  .row-name { font: 600 1.1rem/1.2 var(--serif); }
+  .row-where { font-size: .8rem; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .no-match { color: var(--ink-3); padding: 20px 12px; }
+  .no-match p { margin: 0; font-style: italic; }
+  .no-match[hidden], .nm-try[hidden] { display: none; }
+  .nm-try { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px !important; font-style: normal !important; }
+  .nm-try button {
+    padding: 6px 12px; border: 1px solid var(--rule); border-radius: 99px; background: var(--card);
+    font: 500 .84rem var(--sans); color: var(--ink-2); cursor: pointer;
+  }
+  .nm-try button:hover { border-color: var(--seal); color: var(--seal); }
+
+  .detail-nav {
+    position: sticky; top: 0; z-index: 2; display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 16px; background: color-mix(in oklab, var(--card) 92%, transparent); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--rule);
+  }
+  .back, .step button {
+    font: 500 .84rem/1 var(--sans); color: var(--ink-2); background: none; border: 0; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px; padding: 8px 10px; border-radius: 8px;
+  }
+  .step button { font-size: 1.3rem; width: 36px; justify-content: center; }
+  .back:hover, .step button:hover { background: var(--paper-2); color: var(--ink); }
+  .panel-detail:focus { outline: none; }
+  .detail { animation: fadeIn .35s var(--ease); } /* opacity alone: a moving ancestor would capture the fixed citation popover */
+  @keyframes fadeIn { from { opacity: 0; } }
+
+  /* ── narrow ── */
+  @media (max-width: 1180px) {
+    .atlas { grid-template-columns: minmax(0, 1fr) 360px; }
+  }
+  @media (max-width: 920px) {
+    .atlas { grid-template-columns: minmax(0, 1fr); height: auto; }
+    .stage { height: calc(100svh - 84px); min-height: 560px; padding-top: 10px; }
+    .view-toggle { display: flex; }
+    .plates { grid-template-columns: 1fr; padding-top: 8px; }
+    .fig-side { display: none; } /* the Front / Back switch already says it */
+    .plates > * { display: none; }
+    .plates[data-view='front'] .fig-front, .plates[data-view='back'] .fig-back { display: flex; }
+    .plates[data-view='feet'] .feet { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; align-content: center; padding-bottom: 64px; } /* centre above the lock card that rides the bottom of the stage */
+    .plates[data-view='feet'] .feet .fig-head { grid-column: 1 / -1; }
+    .plates[data-view='feet'] .feet :global(.sole) { grid-column: 1 / -1; justify-self: center; } /* centred under the two sides, not stranded in the left column */
+    .feet :global(.plate svg) { max-height: 26vh; }
+    .feet :global(.sole svg) { max-height: 32vh; }
+    .panel { border-left: 0; border-top: 1px solid var(--rule); overflow: visible; } /* clipping here would unstick the back bar */
+    .detail-nav { top: 60px; } /* rests under the site header; Back and the steps stay within reach through a long read */
+    .panel-index, .panel-detail { overflow: visible; }
+    .panel-head { position: static; }
+    .atlas.has-detail .panel { scroll-margin-top: -15px; } /* against the page's scroll padding: the back bar lands flush under the header */
+    .peek:not([hidden]) {
+      position: absolute; left: 50%; bottom: 18px; z-index: 5; transform: translateX(-50%);
+      display: flex; align-items: center; gap: 12px; width: min(92%, 380px); padding: 10px 16px 10px 10px;
+      border: 1px solid color-mix(in oklab, var(--d) 40%, var(--rule)); border-radius: 999px;
+      background: color-mix(in oklab, var(--card) 96%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+      box-shadow: 0 8px 28px -12px color-mix(in oklab, var(--ink) 40%, transparent);
+      color: var(--ink); font: inherit; text-align: left; cursor: pointer; animation: peek-in .35s var(--ease);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .peek .tip-body { flex: 1; min-width: 0; }
+    .peek .tip-body strong { font-size: 1.15rem; }
+    .peek .tip-body span { display: block; font-size: .78rem; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .peek .tip-n { width: 34px; height: 34px; font-size: .85rem; }
+    .peek-go { flex: none; color: var(--d); font-size: 1.1rem; }
+    .peek.hint:not([hidden]) { border-color: var(--rule); }
+    .hint-n { flex: none; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; border: 1px dashed var(--ink-4); font: 500 .8rem var(--sans); color: var(--ink-3); }
+    .hint .peek-go { color: var(--ink-3); }
+    @keyframes peek-in { from { opacity: 0; transform: translate(-50%, 8px); } }
+  }
+  @media (min-width: 921px) { .peek { display: none; } }
+</style>

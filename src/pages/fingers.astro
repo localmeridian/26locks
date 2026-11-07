@@ -1,0 +1,399 @@
+---
+import Base from '../layouts/Base.astro';
+import Term from '../components/Term.astro';
+import Hint from '../components/Hint.astro';
+import Plate from '../components/Plate.astro';
+import { positions, type Plate as PlateName } from '../data/positions';
+import SourceKeys from '../components/SourceKeys.astro';
+import { sels, depths } from '../data';
+import { fingers, fingerHold } from '../data/system';
+import { attitudes, fingerNotes, fingersToes, mudras } from '../data/selfhelp';
+import { fingersArt, fingerTransform, palmCentre, HAND_W, HAND_H } from '../lib/hand-art';
+// Finger tints fade from the tip to the knuckle so no edge shows where finger meets palm.
+// The outlines live in the traced path's own (scaled, flipped) space, so map the points into it.
+const toPath = ([x, y]: [number, number]) => [x / 0.02, (HAND_H - y) / 0.02];
+const fade = (k: string) => {
+  const [x1, y1] = toPath(fingersArt[k].tip), [x2, y2] = toPath(fingersArt[k].base);
+  return { x1, y1, x2, y2 };
+};
+// A small dot just inside each fingertip says "tap here" before any words do.
+const tipDot = (k: string): [number, number] => {
+  const { tip, base } = fingersArt[k];
+  const dx = base[0] - tip[0], dy = base[1] - tip[1], len = Math.hypot(dx, dy);
+  return [+(tip[0] + (dx / len) * 16).toFixed(1), +(tip[1] + (dy / len) * 16).toFixed(1)];
+};
+
+const byN = new Map(sels.map((s) => [s.n, s]));
+const depthName = (n: number) => depths.find((d) => d.n === n)?.name ?? (n === 6 ? '6th Depth' : '');
+const ink = (n: number) => (n <= 5 ? `d${n}` : 'd6');
+const order = ['thumb', 'index', 'middle', 'ring', 'little'] as const;
+// The hand is rendered art (scripts/figure); finger outlines on top take the tint.
+const art = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/figure/hand`;
+// "Grief / sadness" reads as one attitude with two names, as on the Depths page.
+// Where a finger's locks sit, so the list has a body: only the views that hold them.
+const views: PlateName[] = ['front', 'back', 'medial', 'lateral', 'sole'];
+const viewsFor = (ns: number[]) => views.filter((v) => ns.some((n) => positions[n]?.some((p) => p.plate === v)));
+const said = (a?: string) => (a ?? '').replace(/\s*\/\s*/g, ', ');
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+<Base title="The Fingers" description="Each finger of the hand harmonises an attitude and an organ pair, and is the key to five of the Safety Energy Locks.">
+  <div class="wrap page">
+    <header class="intro">
+      <p class="eyebrow">Self-help</p>
+      <h1>The hand is a map.</h1>
+      <p class="prose lede">
+        Each finger carries a depth, an organ pair and an attitude, and is the <em>key</em> to five <Term plural short />.
+        <SourceKeys keys={['C16', 'A44', 'C01', 'C02', 'C05']} />
+      </p>
+      <Hint label="Try"><span>Wrap one hand around a finger of the other and rest there a few minutes. <a href="#how">How to hold</a></span></Hint>
+    </header>
+
+    <section class="explorer" data-fingers>
+      <figure class="hand-fig">
+        <svg viewBox={`0 0 ${HAND_W} ${HAND_H}`} role="group" aria-label="Left hand, palm facing you">
+          <mask id="hand-shade" maskUnits="userSpaceOnUse" x="0" y="0" width={HAND_W} height={HAND_H}>
+            <image href={`${art}-shade.webp`} width={HAND_W} height={HAND_H} />
+          </mask>
+          <use class="fig-fill" href={`${art}.svg#fill`} />
+          <rect class="fig-shade" width={HAND_W} height={HAND_H} mask="url(#hand-shade)" />
+          {order.map((k) => {
+            const f = fingers.find((x) => x.key === k)!;
+            return (
+              <g class:list={['fg', ink(f.depth)]} data-finger={k} tabindex="0" role="button" aria-label={`${f.label}: ${said(f.attitude)}`}>
+                <linearGradient id={`fgg-${k}`} gradientUnits="userSpaceOnUse" {...fade(k)}>
+                  <stop offset="0" class="fgs" /><stop offset=".6" class="fgs" stop-opacity=".7" /><stop offset="1" class="fgs" stop-opacity="0" />
+                </linearGradient>
+                <path class="fg-shape" transform={fingerTransform} d={fingersArt[k].d} fill={`url(#fgg-${k})`} />
+                <circle class="fg-tip" cx={tipDot(k)[0]} cy={tipDot(k)[1]} r="4.5" />
+              </g>
+            );
+          })}
+          <use class="fig-lines" href={`${art}.svg#lines`} />
+          <g class="fg palm d6" data-finger="palm" tabindex="0" role="button" aria-label="Centre of the palm">
+            <circle cx={palmCentre[0]} cy={palmCentre[1]} r="34" class="palm-hit" />
+            <circle cx={palmCentre[0]} cy={palmCentre[1]} r="7" class="palm-dot fg-tip" />
+          </g>
+          {order.map((k) => {
+            const { tip, base } = fingersArt[k];
+            const dx = tip[0] - base[0], dy = tip[1] - base[1], len = Math.hypot(dx, dy);
+            const x = +(tip[0] + (dx / len) * 22).toFixed(1), y = +(tip[1] + (dy / len) * 22).toFixed(1);
+            const att = (fingers.find((f) => f.key === k)!.attitude ?? '').split(/[,/]/)[0].trim().toLowerCase();
+            return (
+              <g class:list={['fg-lab', ink(fingers.find((f) => f.key === k)!.depth)]}>
+                <text class="fg-att" x={x} y={y - 13} dy=".35em">{att}</text>
+                <text class="fg-label" x={x} y={y} dy=".35em">{k}</text>
+              </g>
+            );
+          })}
+        </svg>
+        <figcaption>Left hand, palm toward you. Tap a finger or the palm.</figcaption>
+      </figure>
+
+      <div class="panels">
+        <article class="panel intro-panel" data-panel="none">
+          <p class="eyebrow">Choose a finger</p>
+          <p class="big">Worry, fear, anger, grief, pretence.</p>
+          <p class="prose">
+            Each attitude settles in a finger. Tap one to see its organs, its depth and the <Term plural short /> it keys.
+          </p>
+          <ul class="legend">
+            {fingers.map((f) => (
+              <li><button type="button" data-pick={f.key} class:list={[ink(f.depth)]}><span class="sw"></span>{f.label}<em>{said(f.attitude) || 'the source'}</em></button></li>
+            ))}
+          </ul>
+        </article>
+
+        {fingers.map((f) => (
+          <article class:list={['panel', ink(f.depth)]} data-panel={f.key} id={f.key} hidden>
+            <p class="eyebrow">{f.key === 'palm' ? 'Centre of the palm' : `${f.label} finger`}</p>
+            <h2>{said(f.attitude) || 'Connection to the source'}</h2>
+            <dl class="facts">
+              <div><dt>Organ pair</dt><dd>{f.organs.join(' & ')}</dd></div>
+              <div>
+                <dt>Depth</dt>
+                <dd>{f.depth <= 5 ? <a href={`${base}/depths/#depth-${f.depth}`}>{depthName(f.depth)}</a> : depthName(f.depth)}</dd>
+              </div>
+            </dl>
+            <p class="eyebrow keyed">{f.sels.length === 1 ? <>Key to <Term short /></> : <>Key to {f.sels.length} <Term plural short /></>}</p>
+            <div class="keyed-wrap">
+            <ul class="keyed-list">
+              {f.sels.map((n) => {
+                const s = byN.get(n)!;
+                return (
+                  <li>
+                    <a href={`${base}/lock/${n}/`} class:list={['kl', `d${s.depth}`]}>
+                      <span class="kn">{n}</span><span class="kt">{s.name}</span>
+                    </a>
+                  </li>
+                );
+              })}
+            </ul>
+            <div class="kmini" aria-hidden="true">
+              {viewsFor(f.sels).map((v) => <Plate plate={v} sels={sels} only={f.sels} interactive={false} label="" class={`km km-${v}`} />)}
+            </div>
+            </div>
+            {f.key !== 'palm' && (
+              <button type="button" class="rest-go" data-rest={said(f.attitude)} data-rest-title={f.key === 'thumb' ? 'The thumb' : `The ${f.key} finger`} data-rest-how={`Wrap your other hand gently around your ${f.key === 'thumb' ? 'thumb' : `${f.key} finger`}. No squeezing.`} data-rest-after="Notice how things are now. Then, if you like, the same finger on the other hand.">Hold it for three minutes</button>
+            )}
+            <p class="note">{f.notes.replace(/\s*\(([A-Z]{1,3}\d[^)]*)\)/g, '')}</p>
+            <SourceKeys keys={f.sources} />
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="how" id="how">
+      <div class="how-text">
+        <p class="eyebrow">How to hold a finger</p>
+        <h2>The hands as jumper cables</h2>
+        <p class="prose">Light and still. The hands link two points, like jumper cables, so energy can move between them.</p>
+        <p class="prose small">
+          Burmeister: for the time you have, or until you feel a rhythm in the finger; a few minutes each to begin with.
+          One teacher suggests three minutes or more a finger, about half an hour for all ten; another, two to twenty minutes; another, until the pulses feel even. <SourceKeys keys={fingerHold.sources} />
+        </p>
+      </div>
+      <div class="how-art" aria-hidden="true">
+        <svg viewBox="0 0 240 160">
+          <path class="hold-a" d="M 30 110 C 60 92 96 86 128 84 L 196 80 C 206 80 210 90 200 94 L 136 100" />
+          <path class="hold-b" d="M 118 70 C 130 56 160 54 172 66 C 182 76 182 104 170 114 C 156 126 128 124 116 110 C 108 98 108 82 118 70 Z" />
+          <path class="hold-c" d="M 120 76 C 140 82 160 84 176 82" />
+          <path class="hold-c" d="M 118 92 C 140 98 160 98 178 96" />
+        </svg>
+      </div>
+    </section>
+
+    <section class="two-maps" id="two-maps">
+      <p class="eyebrow">Easy to mix up</p>
+      <h2>Two different finger maps</h2>
+      <div class="prose">
+        <p>
+          The <strong>attitude map</strong> gives each finger a depth, an organ pair, and an attitude: the thumb is the 1st Depth, and worry.
+          The <strong>finger key</strong> follows the Supervisor through the <Term plural short />, thumb to little finger and round again, so each finger
+          keys locks from several depths. That is why Lock 23, the 4th Depth’s only lock, is keyed by the little finger, not the index.
+          <SourceKeys keys={['A44', 'C01', 'C05']} />
+        </p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Finger</th><th>Attitude map</th><th>Finger key: <Term plural short /></th></tr></thead>
+          <tbody>
+            {fingers.map((f) => (
+              <tr>
+                <th scope="row"><span class:list={['sw', ink(f.depth)]}></span>{f.label}</th>
+                <td>{f.depth <= 5 ? `${depthName(f.depth)} · ${said(f.attitude)}` : depthName(f.depth)}</td>
+                <td class="nums">
+                  {f.sels.map((n) => <a href={`${base}/lock/${n}/`} class:list={['chipn', `d${byN.get(n)!.depth}`]} title={`${n} · ${byN.get(n)!.name}`} aria-label={`Lock ${n}, ${byN.get(n)!.name}`}>{n}</a>)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p class="prose small">“Opposite” comes from Book 3’s hand-and-foot pages. Its finger-toe headings print the word only for the thumb and little toe.</p>
+      <aside class="conflicts">
+        <p class="eyebrow">Where sources differ</p>
+        <ul>
+          <li>Mary Burmeister’s Book 2 and the finger-key table give the index finger as the key to <a href={`${base}/lock/5/`}>Lock 5</a>. One European Office post gives the ring finger. <SourceKeys keys={['A44', 'C01', 'A5']} label={false} /></li>
+          <li>Some popular sources link the index finger to the large intestine. The attitude tables give Kidney and Bladder (fear). <SourceKeys keys={['C16', 'C02', 'C05']} label={false} /></li>
+        </ul>
+      </aside>
+    </section>
+
+    <section class="more" id="attitudes">
+      <p class="eyebrow">Project II</p>
+      <h2>A short sequence for each attitude</h2>
+      <p class="prose">Holding one finger is the quick way. Burmeister’s first book also gives a sequence: hold each finger in turn with the other hand, on the tenser side or on both. Each attitude covers a family of feelings. She calls fear the core of them all. <SourceKeys keys={['C16']} /></p>
+      <ul class="seqs">
+        {attitudes.map((a) => (
+          <li>
+            <h3>{a.name}</h3>
+            <ol class="seq">{a.steps.map((k) => <li class={ink(fingers.find((f) => f.key === k)!.depth)}>{k}</li>)}</ol>
+            <p>{a.also}</p>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <section class="more" id="each-finger">
+      <p class="eyebrow">Finger by finger</p>
+      <h2>What each one aids, and its toe</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Finger</th><th>Traditionally aids</th><th>Pairs with</th><th>Sense · layer</th></tr></thead>
+          <tbody>
+            {fingerNotes.map((f) => <tr><th scope="row">{f.label}</th><td>{f.aids}</td><td>{f.toe}</td><td>{f.layer}</td></tr>)}
+          </tbody>
+        </table>
+      </div>
+      <p class="small">The palm’s sense is intuition, the source of energy for every function. The last column comes from Book 3’s order of creation. Each finger’s layer agrees with the Depths, though her order differs. <SourceKeys keys={['C16', 'C19']} /></p>
+    </section>
+
+    <section class="more" id="fingers-toes">
+      <p class="eyebrow">Book 3</p>
+      <h2>Hands and feet</h2>
+      <dl class="points">
+        {fingersToes.points.map((p) => <div><dt>{p.t}</dt><dd>{p.d}</dd></div>)}
+      </dl>
+      <aside class="conflicts">
+        <p class="eyebrow">Two pairings in Book 3</p>
+        <p class="conf-p">{fingersToes.conflict} <SourceKeys keys={fingersToes.sources} label={false} /></p>
+      </aside>
+    </section>
+
+    <section class="more" id="mudras">
+      <p class="eyebrow">Mudras</p>
+      <h2>The eight poses</h2>
+      <p class="prose">{mudras.intro} <SourceKeys keys={mudras.sources} /></p>
+      <ol class="mudras">
+        {mudras.items.map((m) => <li><span class="mn">{m.n}</span><div><p>{m.how}</p><p class="for">{m.for}</p></div></li>)}
+      </ol>
+    </section>
+  </div>
+</Base>
+
+<script>
+  const root = document.querySelector<HTMLElement>('[data-fingers]')!;
+  const parts = root.querySelectorAll<SVGGElement>('.fg');
+  const panels = root.querySelectorAll<HTMLElement>('[data-panel]');
+  function show(key: string | null, push = true) {
+    if (key) root.classList.add('touched');
+    parts.forEach((p) => p.classList.toggle('on', p.dataset.finger === key));
+    root.classList.toggle('has-pick', !!key);
+    panels.forEach((p) => (p.hidden = (p.dataset.panel ?? '') !== (key ?? 'none')));
+    if (push) history.replaceState(null, '', key ? `#${key}` : location.pathname);
+  }
+  parts.forEach((p) => {
+    p.addEventListener('click', () => show(p.dataset.finger!));
+    p.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); show(p.dataset.finger!); }
+    });
+  });
+  root.querySelectorAll<HTMLButtonElement>('[data-pick]').forEach((b) => b.addEventListener('click', () => show(b.dataset.pick!)));
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') show(null); });
+  const initial = location.hash.slice(1);
+  if (['thumb', 'index', 'middle', 'ring', 'little', 'palm'].includes(initial)) {
+    show(initial, false);
+    document.documentElement.dataset.ownHash = '1';
+    // The panel was hidden when the browser looked for it, so bring the chosen finger into view here:
+    // its panel where the two stack, the hand beside it where they sit side by side.
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+    const stacked = matchMedia('(max-width: 920px)').matches;
+    const go = () => setTimeout(() => (stacked ? document.getElementById(initial) : document.querySelector('.explorer'))?.scrollIntoView({ block: 'start', behavior: 'instant' }));
+    if (document.readyState === 'complete') go(); else addEventListener('load', go, { once: true });
+  }
+</script>
+
+<style>
+  .page { padding-top: 48px; padding-bottom: 96px; }
+  .intro h1 { margin: 8px 0 16px; }
+  .d6 { --d: var(--ink-3); }
+  .small { font-size: .9rem; color: var(--ink-3); }
+
+  .explorer { scroll-margin-top: 90px; margin-top: 40px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 48px; align-items: center; }
+  .hand-fig { margin: 0; }
+  .hand-fig svg { width: 100%; max-height: 72svh; display: block; margin-inline: auto; overflow: visible; filter: var(--body-shadow); }
+  .hand-fig figcaption { text-align: center; font-size: .8rem; color: var(--ink-3); margin-top: 10px; }
+  .fg { cursor: pointer; outline: none; }
+  .fig-fill { fill: var(--body-fill); }
+  .fig-shade { fill: var(--fig-shade); opacity: var(--fig-shade-o); pointer-events: none; }
+  .fig-lines { fill: var(--ink-2); pointer-events: none; }
+  .fgs { stop-color: var(--d); }
+  .fg-shape { fill-opacity: .07; transition: fill-opacity .4s var(--ease); }
+  .fg:hover .fg-shape, .fg:focus-visible .fg-shape { fill-opacity: .24; }
+  .fg.on .fg-shape { fill-opacity: .4; }
+  .fg-tip { fill: var(--d); opacity: .8; transform-box: fill-box; transform-origin: center; transition: opacity .3s var(--ease), transform .3s var(--ease); }
+  .fg:hover .fg-tip, .fg.on .fg-tip { opacity: 1; transform: scale(1.3); }
+  [data-fingers]:not(.touched) .fg-tip { animation: beckon 2.8s var(--ease) infinite; }
+  [data-fingers]:not(.touched) .fg:nth-child(odd) .fg-tip { animation-delay: 1.4s; }
+  @keyframes beckon { 50% { transform: scale(1.5); opacity: .45; } }
+  @media (prefers-reduced-motion: reduce) { [data-fingers] .fg-tip { animation: none !important; } }
+  .palm-hit { fill: transparent; }
+  .palm .palm-dot { fill: var(--seal); opacity: .55; }
+  .fg-att { font: italic 500 13px var(--serif); fill: var(--d); text-anchor: middle; pointer-events: none; }
+  .fg-label { font: 600 9px var(--sans); letter-spacing: .14em; text-transform: uppercase; fill: var(--ink-3); text-anchor: middle; pointer-events: none; }
+
+  .panels { min-height: 420px; display: grid; }
+  .panel { scroll-margin-top: 120px; grid-area: 1 / 1; padding: 28px 0 0; border-top: 1px solid var(--d, var(--rule)); align-self: center; animation: rise .45s var(--ease); }
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } }
+  .panel h2 { margin: 4px 0 18px; font-size: clamp(2rem, 4vw, 2.8rem); color: var(--d); }
+  .panel .eyebrow { margin: 0; }
+  .big { font: italic 500 1.6rem/1.3 var(--serif); margin: 8px 0 12px; }
+  .legend { list-style: none; padding: 0; margin: 20px 0 0; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .legend button { width: 100%; display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 12px; border: 1px solid var(--rule); background: transparent; color: var(--ink); font: 500 .9rem var(--sans); cursor: pointer; text-align: left; }
+  .legend button:hover { border-color: var(--d); }
+  .legend em { margin-left: auto; font: italic 500 1rem var(--serif); color: var(--ink-3); }
+  .sw { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--d); display: inline-block; }
+  .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 0 0 22px; }
+  .facts dt { font: 600 .66rem var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); }
+  .facts dd { margin: 3px 0 0; font: 500 1.1rem var(--serif); }
+  .keyed { margin-bottom: 8px !important; }
+  .keyed-list { list-style: none; padding: 0; margin: 8px 0 18px; display: grid; gap: 4px; }
+  .keyed-wrap { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 20px; align-items: start; }
+  .kmini { display: flex; align-items: flex-end; gap: 2px; }
+  .kmini :global(.km) { width: 92px; }
+  .kmini :global(.km-medial), .kmini :global(.km-lateral) { width: 104px; }
+  .kmini :global(.km-sole) { width: 44px; }
+  @media (max-width: 640px) {
+    .keyed-wrap { grid-template-columns: 1fr; }
+    .kmini { justify-content: center; margin-bottom: 14px; }
+  }
+  .kl { display: flex; align-items: center; gap: 12px; padding: 6px 8px; border-radius: 10px; text-decoration: none; }
+  .kl:hover { background: var(--paper-2); }
+  .kn { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font: 700 .72rem var(--sans); color: var(--paper); background: var(--d); }
+  .kt { font: 600 1.05rem var(--serif); color: var(--ink); }
+  .rest-go { display: inline-flex; align-items: center; height: 44px; margin: 0 0 16px; padding: 0 20px; border: 0; border-radius: 99px; background: var(--ink); color: var(--paper); font: 500 .92rem/1 var(--sans); cursor: pointer; }
+  .note { font-size: .88rem; color: var(--ink-2); line-height: 1.55; margin: 0 0 12px; }
+
+  .how { margin-top: 96px; display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 48px; align-items: center; scroll-margin-top: 110px; }
+  .how h2 { margin: 6px 0 14px; }
+  .how-art svg { width: 100%; max-width: 320px; display: block; margin-inline: auto; }
+  .hold-a, .hold-b { fill: var(--body-fill); stroke: var(--body-line); stroke-width: 1.4; stroke-linejoin: round; }
+  .hold-c { fill: none; stroke: var(--body-hint); opacity: .5; }
+
+  .two-maps { margin-top: 96px; scroll-margin-top: 96px; }
+  .more { margin-top: 88px; scroll-margin-top: 96px; }
+  .more h2 { margin: 6px 0 14px; }
+  .seqs { list-style: none; margin: 20px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 22px 32px; }
+  .seqs h3 { margin: 0 0 6px; }
+  .seqs p { margin: 8px 0 0; font-size: .92rem; color: var(--ink-2); line-height: 1.45; }
+  .seq { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 6px; font: 500 .9rem var(--sans); }
+  .seq li { color: var(--d); }
+  .seq li + li::before { content: '→ '; color: var(--ink-3); }
+  .points { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px 32px; margin: 20px 0 0; }
+  .points dt { font: 600 .92rem var(--sans); }
+  .points dd { margin: 3px 0 0; color: var(--ink-2); line-height: 1.5; }
+  .conf-p { margin: 6px 0 0; font-size: .92rem; color: var(--ink-2); }
+  .mudras { list-style: none; margin: 20px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px 32px; }
+  .mudras li { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 10px; align-items: baseline; padding-top: 12px; border-top: 1px solid var(--rule); }
+  .mn { font: italic 500 1.3rem var(--serif); color: var(--seal); }
+  .mudras p { margin: 0; line-height: 1.45; }
+  .mudras .for { margin-top: 4px; font-size: .86rem; color: var(--ink-3); }
+  .two-maps h2 { margin: 6px 0 16px; }
+  .table-wrap { margin-top: 24px; border-radius: 16px; overflow: hidden; border: 1px solid var(--rule); background: var(--card); }
+  table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+  th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--rule); vertical-align: middle; }
+  thead th { font: 600 .66rem var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); background: var(--paper-2); }
+  tbody th { font: 600 1.05rem var(--serif); white-space: nowrap; }
+  tbody th .sw { margin-right: 10px; }
+  tbody tr:last-child > * { border-bottom: 0; }
+  .nums { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chipn { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font: 700 .72rem var(--sans); text-decoration: none; color: var(--d); border: 1.5px solid var(--d); }
+  .chipn:hover { background: var(--d); color: var(--paper); }
+  .conflicts { margin-top: 28px; padding: 20px 24px; border-left: 3px solid var(--seal); background: var(--seal-soft); border-radius: 0 14px 14px 0; }
+  .conflicts ul { margin: 8px 0 0; padding-left: 18px; font-size: .92rem; color: var(--ink-2); display: grid; gap: 6px; }
+
+  @media (max-width: 920px) {
+    .explorer, .how { grid-template-columns: 1fr; gap: 24px; }
+    .hand-fig svg { max-height: 56svh; }
+    .panels { min-height: 0; }
+    .panel { padding: 22px; }
+  }
+  @media (max-width: 520px) {
+    .legend { grid-template-columns: 1fr; }
+    th, td { padding: 10px 10px; }
+    thead th:nth-child(2), tbody td:nth-child(2) { display: none; }
+    /* The words carry the hold; the sketch only adds air on a phone. */
+    .how-art { display: none; }
+    .how, .two-maps { margin-top: 64px; }
+  }
+</style>

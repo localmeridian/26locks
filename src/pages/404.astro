@@ -1,0 +1,20 @@
+---
+import Base from '../layouts/Base.astro';
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+<Base title="Page not found" description="This page could not be found." noindex>
+  <div class="wrap lost">
+    <p class="eyebrow">Page not found</p>
+    <h1>Nothing rests here.</h1>
+    <p>The page may have moved. The atlas is a good place to begin again.</p>
+    <p class="go"><a href={`${base}/atlas/`}>The atlas</a><a href={`${base}/`}>The home page</a></p>
+  </div>
+</Base>
+
+<style>
+  .lost { padding-block: 14svh; text-align: center; }
+  .lost h1 { margin: 10px 0 16px; }
+  .lost p { color: var(--ink-2); }
+  .go { display: flex; justify-content: center; gap: 22px; margin-top: 18px; font-weight: 500; }
+  .go a { color: var(--seal); }
+</style>

@@ -1,0 +1,57 @@
+---
+import Base from '../layouts/Base.astro';
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+<Base title="About & method" description="How 26 Locks was researched and what it does and does not claim.">
+  <article class="wrap page prose">
+    <p class="eyebrow">About this atlas</p>
+    <h1>Kept open beside the table.</h1>
+
+    <p class="lede">
+      A study companion for people who practise or are learning Jin Shin Jyutsu, made for the questions that come up mid-session.
+      Where is 23? Which depth holds 16? What does 26 direct?
+    </p>
+
+    <h2>Reading the map</h2>
+    <dl class="key">
+      <dt>Colour</dt><dd>The lock’s depth: five depths, five hues.</dd>
+      <dt>Two sides</dt><dd>Every lock is on both the left and the right.</dd>
+      <dt>Moving lines</dt><dd>The tradition’s circulation: down the front, up the back.</dd>
+      <dt class="kb">Keys</dt><dd class="kb"><kbd>/</kbd> search · <kbd>←</kbd> <kbd>→</kbd> step through locks · <kbd>Esc</kbd> back</dd>
+    </dl>
+
+    <h2>Where it comes from</h2>
+    <p>
+      Everything in this atlas comes, at one remove or more, from Mary Burmeister. Where possible, each claim is checked against two
+      independent sources and carries a key to the <a href={`${base}/sources/`}>sources page</a>.
+    </p>
+    <p>
+      Each lock also says how well its sources <strong>agree</strong>. Where they differ on place, name or meaning, you see every version,
+      not a quiet choice.
+    </p>
+    <p>
+      The figure is one neutral adult, built from the <a href="https://static.makehumancommunity.org/" rel="noopener">MakeHuman</a> base
+      mesh (CC0) and drawn in <a href="https://www.blender.org" rel="noopener">Blender</a>. The scripts are in the repository, so every
+      point can be re-placed.
+    </p>
+
+    <h2>What it is not</h2>
+    <p>
+      Not a substitute for classes, practice or a clinician. The art is taught in person, over years. The body areas and feelings
+      beside each lock are <strong>traditional associations</strong>, not diagnoses or medical claims; Jin Shin Jyutsu is offered
+      alongside medical care, never instead of it.
+    </p>
+    <p>For authorised classes and practitioners, see <a href="https://www.jsjinc.net" rel="noopener">jsjinc.net</a>.</p>
+  </article>
+</Base>
+
+<style>
+  .page { padding-top: 56px; }
+  h1 { margin: 8px 0 20px; }
+  .lede { font-size: 1.12rem; }
+  .key { display: grid; grid-template-columns: max-content 1fr; gap: 10px 20px; margin: 0 0 8px; }
+  .key dt { font: 600 .74rem var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); padding-top: .3em; }
+  .key dd { margin: 0; }
+  @media (hover: none) { .key .kb { display: none; } }
+  kbd { font: 600 .78rem var(--sans); padding: 2px 7px; border: 1px solid var(--rule); border-bottom-width: 2px; border-radius: 6px; background: var(--card); }
+</style>

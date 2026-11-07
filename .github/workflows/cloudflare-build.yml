@@ -1,0 +1,35 @@
+# Cloudflare Workers Builds deploys every push to main but can't email when a
+# build fails. It does report each build back here as a check run, so this
+# waits for that check and fails if it did. GitHub then emails about the
+# failed workflow, which is the alert.
+name: Cloudflare build
+on:
+  push:
+    branches: [main]
+permissions:
+  checks: read
+  contents: read
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Wait for the Workers Builds check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          for i in $(seq 1 60); do
+            line=$(gh api "repos/$REPO/commits/$SHA/check-runs" \
+              --jq '.check_runs[] | select(.app.slug == "cloudflare-workers-and-pages") | "\(.status) \(.conclusion) \(.html_url)"' | head -1)
+            set -- $line
+            if [ "$1" = "completed" ]; then
+              echo "Cloudflare build: $2  $3"
+              [ "$2" = "success" ] && exit 0
+              echo "::error::Cloudflare Workers build $2 — see $3"
+              exit 1
+            fi
+            echo "waiting (${1:-not started})…"; sleep 15
+          done
+          echo "::error::No Cloudflare build result after 15 minutes"; exit 1

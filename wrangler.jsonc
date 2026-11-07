@@ -1,0 +1,18 @@
+{
+  // Static-assets-only Worker, mounted at localmeridian.net/26locks.
+  // Build: npm run build   Deploy: npx wrangler deploy   See DEPLOY.md.
+  "name": "26locks",
+  "compatibility_date": "2026-10-01",
+  // Served only on localmeridian.net: no *.workers.dev address, no preview URLs.
+  "workers_dev": false,
+  "preview_urls": false,
+  "assets": {
+    "directory": "./dist",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page"
+  },
+  "routes": [
+    { "pattern": "localmeridian.net/26locks", "zone_name": "localmeridian.net" },
+    { "pattern": "localmeridian.net/26locks/*", "zone_name": "localmeridian.net" }
+  ]
+}

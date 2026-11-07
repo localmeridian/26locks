@@ -1,0 +1,241 @@
+---
+import SourceKeys from './SourceKeys.astro';
+import Plate from './Plate.astro';
+import { positions } from '../data/positions';
+import { sourceMap } from '../data/sources';
+import { fingers, fingerHold } from '../data/system';
+import Term from './Term.astro';
+import { asQuery, matching } from '../lib/search';
+import type { Sel, DepthInfo } from '../data/types';
+
+interface Props { sel: Sel; depth: DepthInfo; sels: Sel[]; compact?: boolean }
+const { sel: s, depth, sels, compact = false } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const plates = [...new Set(positions[s.n].map((p) => p.plate))];
+const nameOf = (n: number) => sels.find((x) => x.n === n)?.name ?? '';
+const depthOf = (n: number) => sels.find((x) => x.n === n)?.depth ?? 1;
+const finger = fingers.find((f) => f.key === s.finger);
+// Most locks already list their finger among the holds; then that hold links to it rather than repeating it.
+const fname = finger && (/^(index|middle|ring|little)$/i.test(finger.label) ? `${finger.label.toLowerCase()} finger` : finger.label.toLowerCase());
+const isFingerHold = (name: string) => !!fname && (name.toLowerCase() === fname || (name.toLowerCase().startsWith(`${finger!.label.toLowerCase()} or `) && /finger/i.test(name)) || (/palm/.test(fname) && /palm/i.test(name)));
+// A finger key follows the Supervisor's order, so it can belong to another depth; say so, or the attitudes seem to clash.
+const fingerInHolds = s.holds.some((h) => isFingerHold(h.name));
+// A paired hold ("1 with 2") already names its partner: link the number there and drop it from "Works with".
+const holdParts = (name: string) => name.split(/\b(\d+)\b/).map((t, i) => (i % 2 && +t !== s.n && sels.some((x) => x.n === +t) ? +t : t));
+const inHolds = new Set(s.holds.flatMap((h) => holdParts(h.name).filter((t): t is number => typeof t === 'number')));
+const related = s.related.filter((r) => !inHolds.has(r.n));
+// A theme shared with other locks links to the Atlas, searched for it.
+const theme = (label: string) => { const q = asQuery(label); return { q, n: matching(sels, q).length }; };
+const plateLabel: Record<string, string> = { front: 'Front', back: 'Back', medial: 'Inner foot', lateral: 'Outer foot', sole: 'Sole' };
+---
+<div class:list={['sd', `d${s.depth}`, { compact }]}>
+  <header class="sd-head">
+    <div class="sd-num" aria-hidden="true">{s.n}</div>
+    <div class="sd-titles">
+      <p class="eyebrow"><Term cap /><span class="sr"> {s.n}</span></p>
+      <h2 class="sd-name">{s.name}</h2>
+      {s.alt.length > 0 && <p class="sd-alt">also: {s.alt.join(' · ')}</p>}
+    </div>
+  </header>
+
+  <p class="sd-essence">{s.essence}</p>
+  <p class="sd-role">{s.role}</p>
+
+  <div class="sd-facts">
+    <a class="fact depth-fact" href={`${base}/depths/#depth-${depth.n}`}>
+      <span class="fact-k">Depth</span>
+      <span class="fact-v"><span class="dot" /> {depth.name}</span>
+      <span class="fact-s">{depth.layer} · {depth.organs.join(' & ')}</span>
+    </a>
+    <div class="fact">
+      <span class="fact-k">Where</span>
+      <span class="fact-v">{s.where}</span>
+      <span class="fact-s">{s.bilateral ? 'Both sides of the body' : 'Single location'}</span>
+    </div>
+  </div>
+
+  <div class="sd-locator">
+    {compact && plates.map((p) => (
+      <Plate plate={p} sels={sels} only={[s.n]} focus={s.n} interactive={false} label={plateLabel[p]} class={`loc loc-${p}`} />
+    ))}
+    <p class="sd-where-detail">{s.whereDetail}</p>
+  </div>
+
+
+  {(s.body.length > 0 || s.feelings.length > 0) && (
+    <section class="sd-sec">
+      <h3>Traditionally linked with</h3>
+      <ul class="chips">
+        {[...s.feelings.map((b) => ['chip feel', b]), ...s.body.map((b) => ['chip', b])].map(([cls, b]) => {
+          const t = theme(b);
+          return <li>{t.n > 1
+            ? <a class={`${cls} theme`} href={`${base}/atlas/?q=${encodeURIComponent(t.q)}`} title={`Every lock linked with ${b.toLowerCase()}`}>{b}<span class="th-n">{t.n}</span></a>
+            : <span class={cls}>{b}</span>}</li>;
+        })}
+      </ul>
+    </section>
+  )}
+
+  <section class="sd-sec sd-open">
+    <h3>Opening this <Term short /></h3>
+    <p class="open-lede">
+      Rest the hands lightly and wait. In the teaching, the <Term short /> opens as the energy moves.
+    </p>
+    <ol class="holds">
+      {s.holds.map((h) => (
+        <li>
+          <strong>{isFingerHold(h.name) ? <a href={`${base}/fingers/#${finger!.key}`}>{h.name}</a> : holdParts(h.name).map((t) => typeof t === 'number' ? <a href={`${base}/lock/${t}/`} data-goto={compact ? t : undefined}>{t}</a> : t)}</strong>
+          <span>{h.how}{isFingerHold(h.name) && <em class="key-note"> {finger!.key === "palm" ? "The palm" : "This finger"} is its key{finger!.attitude && `, and holds ${finger!.attitude.toLowerCase().replace(/\s*\/\s*/g, " and ")}`}.</em>}</span>
+        </li>
+      ))}
+      {finger && !fingerInHolds && (
+        <li>
+          <strong>Through the {fname}</strong>
+          <span>
+            The <a href={`${base}/fingers/#${finger.key}`}>{fname}</a> is its key. {fingerHold.description}
+          </span>
+        </li>
+      )}
+    </ol>
+    <button type="button" class="rest-go" data-rest={`Lock ${s.n}`} data-rest-title={s.name} data-rest-how={s.holds[0].how} data-rest-after="Notice how things are now.">Rest here for three minutes</button>
+  </section>
+
+  <section class="sd-sec">
+    <h3>{depth.sels.length > 1 ? 'Sharing its depth' : 'Alone in its depth'}</h3>
+    <div class="kin">
+      <a class="kin-name" href={`${base}/depths/#depth-${depth.n}`}>{depth.name} · {depth.layer.toLowerCase()} · <em>{depth.attitude.split(',')[0].toLowerCase()}</em></a>
+      <ol class="kin-n" aria-label={`Locks of the ${depth.name}`} style={`flex-basis: ${depth.sels.length * 34 - 4}px`}>
+        {depth.sels.map((n) => n === s.n
+          ? <li aria-current="true">{n}</li>
+          : <li><a href={`${base}/lock/${n}/`} data-goto={compact ? n : undefined}>{n}</a></li>)}
+      </ol>
+    </div>
+  </section>
+
+  {related.length > 0 && (
+    <section class="sd-sec">
+      <h3>Works with</h3>
+      <ul class="related">
+        {related.map((r) => (
+          <li>
+            <a href={`${base}/lock/${r.n}/`} data-goto={compact ? r.n : undefined} class:list={['rel', `d${depthOf(r.n)}`]}>
+              <span class="rel-n">{r.n}</span>
+              <span class="rel-t"><strong>{nameOf(r.n)}</strong><span>{r.why}</span></span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  {s.notes && (
+    <section class="sd-sec sd-notes">
+      <h3>Notes</h3>
+      <p>{s.notes}</p>
+    </section>
+  )}
+
+  <footer class="sd-foot">
+    <p class="sd-sources">
+      <span class="fact-k">{new Set(s.sources).size} sources</span>
+      <SourceKeys keys={s.sources} />
+      <span class:list={['conf', s.confidence]} title="How well the sources agree">{s.confidence} agreement</span>
+    </p>
+    {compact && <a class="more" href={`${base}/lock/${s.n}/`}>Open the full page for {s.n} →</a>}
+  </footer>
+</div>
+
+<style>
+  .rest-go { display: inline-flex; align-items: center; height: 44px; margin-top: 14px; padding: 0 20px; border: 0; border-radius: 99px; background: var(--ink); color: var(--paper); font: 500 .92rem/1 var(--sans); cursor: pointer; }
+  /* The big numeral already says which lock; the eyebrow keeps the number for screen readers only. */
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .sd { --d: var(--ink-3); padding: 22px 26px 30px; }
+  .sd.d1 { --d: var(--d1); } .sd.d2 { --d: var(--d2); } .sd.d3 { --d: var(--d3); } .sd.d4 { --d: var(--d4); } .sd.d5 { --d: var(--d5); }
+  .sd:not(.compact) { padding: 0; }
+
+  .sd-head { display: flex; align-items: center; gap: 18px; }
+  .sd-num {
+    flex: none; width: 74px; height: 74px; border-radius: 50%; display: grid; place-items: center;
+    font: 400 2.6rem/1 var(--serif); color: var(--paper); background: var(--d);
+    box-shadow: 0 0 0 6px color-mix(in oklab, var(--d) 18%, transparent), 0 0 40px color-mix(in oklab, var(--d) 35%, transparent);
+  }
+  .sd:not(.compact) .sd-num { width: 104px; height: 104px; font-size: 3.6rem; }
+  .sd-name { font-size: 2.2rem; line-height: 1.02; margin-top: 4px; }
+  .sd:not(.compact) .sd-name { font-size: clamp(2.6rem, 5vw, 3.8rem); }
+  .sd-alt { margin: 6px 0 0; font: italic 500 1rem/1.3 var(--serif); color: var(--ink-3); }
+  .sd-essence { font: 500 1.28rem/1.4 var(--serif); color: var(--ink); margin: 18px 0 18px; padding-left: 14px; border-left: 2px solid var(--d); }
+  .sd:not(.compact) .sd-essence { font-size: 1.6rem; }
+  .sd-essence:has(+ .sd-role) { margin-bottom: 10px; }
+  .sd-role { margin: 0 0 20px; padding-left: 16px; color: var(--ink-2); font-size: .98rem; line-height: 1.6; max-width: 62ch; }
+
+  .sd-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .fact { display: flex; flex-direction: column; gap: 3px; padding: 12px 14px; border-radius: 12px; background: var(--paper); border: 1px solid var(--rule); text-decoration: none; }
+  a.fact:hover { border-color: var(--d); }
+  .fact-k { font: 600 .62rem/1 var(--sans); letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3); }
+  .fact-v { font: 600 1.05rem/1.25 var(--serif); display: flex; align-items: center; gap: 7px; }
+  .fact-v .dot { color: var(--d); }
+  .fact-s { font-size: .76rem; color: var(--ink-3); line-height: 1.35; }
+
+  .sd-locator { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 18px; margin: 18px 0 4px; padding: 16px; border-radius: 12px; border: 1px dashed var(--rule); }
+  .sd-locator :global(.loc-front), .sd-locator :global(.loc-back) { width: 92px; }
+  .sd-locator :global(.loc-medial), .sd-locator :global(.loc-lateral) { width: 130px; }
+  .sd-locator :global(.loc-sole) { width: 54px; }
+  .sd:not(.compact) .sd-locator :global(.loc-front), .sd:not(.compact) .sd-locator :global(.loc-back) { width: 150px; }
+  .sd:not(.compact) .sd-locator { padding: 0; border: 0; margin-top: 14px; }
+  /* On phones the atlas figure sits just above the panel, so the small locator figures would only repeat it. */
+  @media (max-width: 920px) {
+    .compact .sd-locator :global(.loc) { display: none; }
+    .compact .sd-locator { padding: 0; border: 0; margin-top: 12px; }
+  }
+  .sd-where-detail { flex: 1 1 160px; margin: 0; font-size: .88rem; color: var(--ink-2); line-height: 1.5; align-self: center; }
+
+  .sd-sec { margin-top: 22px; }
+  .sd-sec h3 { font: 600 .66rem/1 var(--sans); letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 10px; }
+  .sd-sec p { color: var(--ink-2); font-size: .95rem; line-height: 1.6; margin: 0; }
+  .chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+  .theme { text-decoration: none; color: inherit; display: inline-flex; align-items: center; gap: 6px; }
+  .theme:hover { border-color: var(--d); }
+  .th-n { font: 600 .66rem/1 var(--sans); color: var(--ink-3); padding: 2px 5px; border-radius: 99px; background: color-mix(in oklab, var(--ink) 7%, transparent); }
+  .chip.feel { background: color-mix(in oklab, var(--d) 12%, var(--paper)); border-color: color-mix(in oklab, var(--d) 35%, var(--rule)); }
+
+  .holds { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; counter-reset: h; }
+  .holds li { counter-increment: h; position: relative; padding: 10px 12px 10px 40px; border-radius: 10px; background: var(--paper); border: 1px solid var(--rule); display: flex; flex-direction: column; gap: 2px; font-size: .9rem; color: var(--ink-2); }
+  .holds li::before { content: counter(h); position: absolute; left: 12px; top: 10px; width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--d); color: var(--d); display: grid; place-items: center; font: 600 .68rem/1 var(--sans); }
+  .holds strong { color: var(--ink); font-weight: 600; }
+  .key-note { font-style: normal; color: var(--ink-3); }
+  .holds a, .open-depth a { color: var(--d); font-weight: 600; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  .holds a:hover, .open-depth a:hover { text-decoration-thickness: 2px; }
+  .open-lede { margin-bottom: 12px !important; }
+  .open-depth { margin-top: 12px !important; font-size: .88rem !important; }
+
+  .kin { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+  .kin-name { font: 500 .82rem var(--sans); color: var(--ink-3); text-decoration: none; }
+  .kin-name em { color: var(--d); }
+  /* One line however many locks the depth holds: the circles shrink to fit. */
+  .kin-n { list-style: none; margin: 0; padding: 0; display: flex; gap: 4px; flex: 0 1 auto; min-width: 0; }
+  .kin-n li { flex: 0 1 30px; min-width: 0; }
+  .kin-n li, .kin-n a { aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center; font: 600 .74rem/1 var(--sans); }
+  .kin-n a { width: 100%; }
+  .kin-n a { color: var(--d); text-decoration: none; border: 1px solid color-mix(in oklab, var(--d) 40%, transparent); }
+  .kin-n a:hover { background: color-mix(in oklab, var(--d) 12%, transparent); }
+  .kin-n [aria-current] { background: var(--d); color: var(--paper); }
+  .related { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  .rel { --d: var(--ink-3); display: flex; gap: 12px; align-items: center; padding: 8px 10px; border-radius: 10px; text-decoration: none; border: 1px solid transparent; }
+  .rel.d1 { --d: var(--d1); } .rel.d2 { --d: var(--d2); } .rel.d3 { --d: var(--d3); } .rel.d4 { --d: var(--d4); } .rel.d5 { --d: var(--d5); }
+  .rel:hover { border-color: var(--rule); background: var(--paper); }
+  .rel-n { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--d); color: var(--paper); display: grid; place-items: center; font: 650 .78rem/1 var(--sans); }
+  .rel-t { display: flex; flex-direction: column; line-height: 1.3; }
+  .rel-t strong { font: 600 1.02rem/1.2 var(--serif); }
+  .rel-t span { font-size: .8rem; color: var(--ink-3); }
+
+  .sd-notes p { font-size: .88rem; font-style: italic; }
+
+  .sd-foot { margin-top: 26px; padding-top: 14px; border-top: 1px solid var(--rule); }
+  .sd-sources { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; font-size: .78rem; margin: 0; }
+  .sd-sources a { color: var(--seal); text-decoration: none; font-weight: 600; }
+  .sd-sources a:hover { text-decoration: underline; }
+  .conf { margin-left: auto; font-size: .7rem; padding: 3px 8px; border-radius: 99px; border: 1px solid var(--rule); color: var(--ink-3); }
+  .conf.high { color: var(--d3); border-color: color-mix(in oklab, var(--d3) 40%, transparent); }
+  .conf.low { color: var(--d4); border-color: color-mix(in oklab, var(--d4) 40%, transparent); }
+  .more { display: inline-block; margin-top: 14px; font-size: .85rem; color: var(--ink-2); }
+</style>

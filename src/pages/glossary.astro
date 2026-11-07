@@ -1,0 +1,199 @@
+---
+import Base from '../layouts/Base.astro';
+import T from '../components/HistoryText.astro';
+import { glossary, glossaryLetters } from '../data/glossary';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+const byLetter = glossaryLetters.map((l) => ({ l, terms: glossary.filter((t) => t.letter === l) }));
+// A reading path for newcomers: the five words every other page leans on, in the order they build.
+const firstWords = ['Lock', 'Depth', 'Flow', 'Attitude', 'Quickie'].map((k) => {
+  const t = glossary.find((g) => g.term === k)!;
+  return { slug: t.slug, term: t.term.replace(/\s*\(.*\)$/, ''), gist: t.definition.split(/(?<=\.)\s/)[0].replaceAll('**', '') };
+});
+---
+<Base title="Glossary" description="The vocabulary of Jin Shin Jyutsu, from Safety Energy Locks to the Depths, with a source for every definition.">
+  <div class="wrap page">
+    <header class="hero">
+      <p class="eyebrow">Terminology</p>
+      <h1>Glossary</h1>
+      <p class="prose lede">
+        The words of the art, paraphrased from Mary Burmeister’s books and the teachers who cite her.
+        Each numbered chip opens that lock on the body.
+      </p>
+    </header>
+
+    <nav class="first" id="start" aria-labelledby="first-h">
+      <h2 id="first-h" class="eyebrow">New here? Start with five words</h2>
+      <ol>
+        {firstWords.map((w) => (
+          <li><a href={`#${w.slug}`}><span class="fw-t serif">{w.term}</span><span class="fw-g">{w.gist}</span></a></li>
+        ))}
+      </ol>
+    </nav>
+
+    <div class="tools" role="search">
+      <label class="filter">
+        <span class="sr">Filter terms</span>
+        <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5" /><path d="M13 13l4.5 4.5" /></svg>
+        <input id="gl-filter" type="search" placeholder={`Search ${glossary.length} terms`} autocomplete="off" spellcheck="false" />
+      </label>
+      <p class="count muted" id="gl-count" aria-live="polite"></p>
+      <nav class="jump" aria-label="Jump to letter">
+        {alphabet.map((l) =>
+          glossaryLetters.includes(l)
+            ? <a href={`#letter-${l}`} data-letter={l}>{l}</a>
+            : <span aria-hidden="true">{l}</span>
+        )}
+      </nav>
+    </div>
+
+    <div class="list">
+      {byLetter.map(({ l, terms }) => (
+        <section class="letter" id={`letter-${l}`} data-letter={l}>
+          <h2 class="lt serif">{l}</h2>
+          <dl>
+            {terms.map((t) => (
+              <div class="term" id={t.slug} data-text={`${t.term} ${t.japanese ?? ''} ${t.definition}`.replaceAll('**', '').toLowerCase()}>
+                <dt>
+                  <a class="anchor" href={`#${t.slug}`} aria-label={`Link to ${t.term}`}>#</a>
+                  <span class="tn">{t.term}</span>
+                  {t.japanese && <span class="jp kanji" lang="ja">{t.japanese}</span>}
+                </dt>
+                <dd>
+                  <T t={t.sources.length ? `${t.definition} [${t.sources.join(', ')}]` : t.definition} />
+                  {(t.sels.length > 0 || t.generalKanji || t.practitioner || t.see || t.page) && (
+                    <p class="meta">
+                      {t.page && <a class="go" href={`${base}${t.page.href}`}>{t.page.label} →</a>}
+                      {t.see?.map((s) => { const r = glossary.find((g) => g.slug === s)!; return <a class="see" href={`#${s}`}>See {r.term}</a>; })}
+                      {t.practitioner && <span class="flag" title="From practitioner usage, not from a published source">Practitioner usage</span>}
+                      {t.sels.map((n) => <a class="chip" href={`${base}/lock/${n}/`}>Lock {n}</a>)}
+                      {t.generalKanji && <span class="flag" title="The characters were not found in a Jin Shin Jyutsu source">Kanji not from a JSJ source</span>}
+                    </p>
+                  )}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      ))}
+      <p class="empty muted" id="gl-empty" hidden>No terms match that filter.</p>
+    </div>
+  </div>
+</Base>
+
+<script>
+  const input = document.getElementById('gl-filter') as HTMLInputElement | null;
+  const count = document.getElementById('gl-count');
+  const empty = document.getElementById('gl-empty');
+  const terms = [...document.querySelectorAll<HTMLElement>('.term')];
+  const letters = [...document.querySelectorAll<HTMLElement>('.letter')];
+  const links = [...document.querySelectorAll<HTMLAnchorElement>('.jump a')];
+  const apply = () => {
+    const q = (input?.value ?? '').trim().toLowerCase();
+    let shown = 0;
+    for (const t of terms) {
+      const hit = !q || (t.dataset.text ?? '').includes(q);
+      t.hidden = !hit;
+      if (hit) shown++;
+    }
+    for (const s of letters) {
+      const any = s.querySelector('.term:not([hidden])') !== null;
+      s.hidden = !any;
+      links.find((a) => a.dataset.letter === s.dataset.letter)?.classList.toggle('off', !any);
+    }
+    if (count) count.textContent = q ? `${shown} of ${terms.length}` : '';
+    if (empty) empty.hidden = shown > 0;
+  };
+  input?.addEventListener('input', apply);
+</script>
+
+<style>
+  .page { padding-top: 56px; padding-bottom: 40px; }
+  .hero h1 { margin: 8px 0 20px; }
+  .lede { font-size: 1.08rem; }
+  :global(.cites) { white-space: nowrap; }
+  :global(.cite-sep) { font-size: .6rem; vertical-align: super; color: var(--ink-4); margin-right: 1px; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  .first { margin-top: 36px; scroll-margin-top: 90px; }
+  .first h2 { margin: 0 0 12px; }
+  .first ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; counter-reset: fw; }
+  .first li { counter-increment: fw; }
+  .first a {
+    display: flex; flex-direction: column; gap: 6px; height: 100%; box-sizing: border-box; padding: 14px 16px 16px;
+    background: var(--card); border: 1px solid var(--rule); border-radius: 14px; text-decoration: none; color: inherit;
+    transition: border-color .15s, transform .15s;
+  }
+  .first a:hover { border-color: var(--seal); transform: translateY(-1px); }
+  .first a::before { content: counter(fw); font: 600 .7rem/1 var(--sans); color: var(--seal); letter-spacing: .08em; }
+  .fw-t { font-size: 1.15rem; line-height: 1.2; color: var(--ink); font-weight: 600; }
+  .fw-g { font-size: .84rem; line-height: 1.45; color: var(--ink-3); }
+
+  .tools {
+    position: sticky; top: 64px; z-index: 5; margin-top: 40px; padding: 14px 0 12px;
+    display: grid; grid-template-columns: minmax(0, 360px) auto; align-items: center; gap: 10px 18px;
+    background: color-mix(in oklab, var(--paper) 92%, transparent); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--rule);
+  }
+  .filter { position: relative; display: block; }
+  .filter svg { position: absolute; left: 12px; top: 50%; width: 16px; height: 16px; translate: 0 -50%; fill: none; stroke: var(--ink-3); stroke-width: 1.6; stroke-linecap: round; }
+  .filter input {
+    width: 100%; box-sizing: border-box; padding: 10px 14px 10px 36px; font: 400 16px/1.3 var(--sans); color: var(--ink);
+    background: var(--card); border: 1px solid var(--rule); border-radius: 99px; outline: none;
+  }
+  .filter input:focus { border-color: var(--seal); box-shadow: 0 0 0 3px var(--seal-soft); }
+  .count { margin: 0; font-size: .8rem; }
+  .jump { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 2px; }
+  .jump a, .jump span { min-width: 26px; padding: 4px 0; text-align: center; font: 600 .78rem/1 var(--sans); border-radius: 6px; }
+  .jump a { color: var(--seal); text-decoration: none; }
+  .jump a:hover { background: var(--seal-soft); }
+  .jump a.off { color: var(--ink-4); pointer-events: none; }
+  .jump span { color: color-mix(in oklab, var(--ink-4) 50%, transparent); }
+
+  .letter { display: grid; grid-template-columns: 80px 1fr; gap: 0 24px; padding-top: 28px; scroll-margin-top: 170px; }
+  .letter[hidden], .term[hidden] { display: none; }
+  .lt { margin: 0; font-size: 3rem; line-height: 1; color: var(--seal); font-weight: 500; }
+  dl { margin: 0; }
+  .term { padding: 14px 0 18px; border-bottom: 1px solid color-mix(in oklab, var(--rule) 60%, transparent); scroll-margin-top: 170px; }
+  .term:target { background: var(--seal-soft); border-radius: 10px; padding-inline: 12px; margin-inline: -12px; }
+  dt { position: relative; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+  .tn { font: 600 1.25rem/1.25 var(--serif); color: var(--ink); }
+  .kanji { font-size: 1.02rem; color: var(--ink-3); }
+  .anchor { position: absolute; left: -20px; top: 2px; font: 500 .9rem var(--sans); color: var(--ink-4); text-decoration: none; opacity: 0; transition: opacity .15s; }
+  .term:hover .anchor, .anchor:focus { opacity: 1; }
+  dd { margin: 6px 0 0; max-width: 70ch; color: var(--ink-2); line-height: 1.6; }
+  .meta { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; margin: 10px 0 0; }
+  .meta .chip { text-decoration: none; }
+  .flag {
+    font: 600 .6rem/1 var(--sans); letter-spacing: .1em; text-transform: uppercase;
+    padding: 4px 8px; border-radius: 99px; border: 1px dashed var(--ink-4); color: var(--ink-3);
+  }
+  .see { font-size: .84rem; color: var(--seal); }
+  .go {
+    font: 600 .8rem/1 var(--sans); padding: 7px 12px; border-radius: 99px; text-decoration: none;
+    color: var(--paper); background: var(--seal); transition: filter .15s;
+  }
+  .go:hover { filter: brightness(1.08); }
+  .empty { margin-top: 32px; }
+
+  @media (max-width: 860px) {
+    /* The header wraps to two rows here, so the filter scrolls with the page. */
+    .tools { position: static; backdrop-filter: none; background: none; }
+    .letter, .term { scroll-margin-top: 130px; }
+  }
+  @media (max-width: 980px) {
+    .first ol { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+  }
+  @media (max-width: 640px) {
+    .first ol { grid-template-columns: 1fr; gap: 0; border: 1px solid var(--rule); border-radius: 14px; background: var(--card); overflow: hidden; }
+    .first li + li { border-top: 1px solid var(--rule); }
+    .first a { flex-direction: row; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; border: 0; border-radius: 0; background: none; padding: 12px 14px; }
+    .first a:hover { transform: none; }
+    .fw-g { flex-basis: 100%; padding-left: 18px; }
+    .tools { grid-template-columns: 1fr auto; }
+    .letter { grid-template-columns: 1fr; }
+    .lt { font-size: 2.2rem; margin-bottom: 4px; }
+    .anchor { display: none; }
+  }
+</style>

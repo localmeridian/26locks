@@ -1,0 +1,213 @@
+---
+import Base from '../layouts/Base.astro';
+import SourceKeys from '../components/SourceKeys.astro';
+import { sources } from '../data/sources';
+import { sels, depths } from '../data';
+import { mary, after, STORE, type Book } from '../data/reading';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+// Back-links: which pages cite each source, so any claim can be traced both ways.
+const citedBy = new Map<string, { label: string; href: string }[]>();
+const cite = (keys: string[], label: string, href: string) =>
+  keys.forEach((k) => citedBy.set(k, [...(citedBy.get(k) ?? []).filter((c) => c.href !== href), { label, href }]));
+for (const s of sels) {
+  cite([...s.sources, ...s.holds.flatMap((h) => h.sources ?? [])], `Lock ${s.n}`, `/lock/${s.n}/`);
+}
+for (const d of depths) cite(d.sources, d.name, `/depths/#depth-${d.n}`);
+
+// Practitioners' own sites, the ones this atlas leans on most.
+const sites = [
+  { name: 'Travelers Guide to Healing', author: 'EffortlessReality', url: 'https://travelersguidetohealing.info/jsj/', keys: ['C02', 'A15', 'A16'],
+    note: 'One practitioner’s study pages on the depths, flows, pulses and all the locks, gathering page references from Mary’s books and Texts alongside the author’s own notes.' },
+  { name: 'Jin Shin Jyutsu Is – New Jersey', author: 'Debbie Beaton', url: 'https://jinshinjyutsuisnjdotnet.wordpress.com/', keys: ['C13', 'A26'],
+    note: 'Articles from The Main Central, the Jin Shin Jyutsu, Inc. newsletter, reposted here, including instructors writing on the locks one by one.' },
+  { name: 'Betty Jean Wall', author: 'Betty Jean Wall', url: 'https://bettyjeanwall.com/', keys: ['A14', 'C07'],
+    note: 'Clear, practical handouts from a practitioner, among them the finger keys to the locks and the organ flows.' },
+];
+
+const allGroups: { title: string; short: string; blurb: string; prefix: string[] }[] = [
+  { title: 'History, people & research', short: 'History', blurb: 'Biography, lineage, organisations and published studies.', prefix: ['H'] },
+  { title: 'Safety Energy Locks 1–13', short: 'Locks 1–13', blurb: 'Locations, names and functions of the first thirteen locks.', prefix: ['A'] },
+  { title: 'Safety Energy Locks 14–26', short: 'Locks 14–26', blurb: 'Locations, names and functions of the remaining thirteen.', prefix: ['B'] },
+  { title: 'System: depths, fingers, flows, clock', short: 'System', blurb: 'How the parts fit together, and the vocabulary.', prefix: ['C'] },
+  { title: 'Private material', short: 'Private', blurb: 'Material provided directly for this project.', prefix: ['U'] },
+];
+const groups = allGroups;
+// Most pages were read on one day; say it once and flag only the exceptions.
+const dates = sources.map((s) => s.accessed).filter(Boolean) as string[];
+const usual = dates.sort((a, b) => dates.filter((d) => d === b).length - dates.filter((d) => d === a).length)[0];
+const usualLong = usual && new Date(`${usual}T12:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+const byPrefix = (p: string[]) =>
+  sources
+    .filter((s) => p.some((x) => s.key.startsWith(x)))
+    .sort((a, b) => +a.key.slice(1) - +b.key.slice(1));
+---
+<Base title="Sources" description="What to read on Jin Shin Jyutsu, starting with Mary Burmeister’s own books, and every source behind this atlas.">
+  <div class="wrap page">
+    <header class="hero">
+      <p class="eyebrow">Read the originals</p>
+      <h1>Sources</h1>
+      <p class="prose lede">
+        Everything in this atlas comes, at one remove or more, from Mary Burmeister, who learned the art from Jiro Murai in Japan
+        and taught it in America from the 1960s. Read her first.
+      </p>
+    </header>
+
+    <section class="reading" aria-labelledby="mary-h">
+      <h2 id="mary-h">Mary Burmeister’s books</h2>
+      <p class="prose small">
+        She wrote in English; the German, Portuguese, and other editions are translations.
+        You can buy her books from <a href={STORE} rel="noopener" target="_blank">Jin Shin Jyutsu, Inc.</a>
+      </p>
+      <ol class="books">
+        {mary.map((b: Book, i) => (
+          <li class:list={['book', { first: i === 0 }]}>
+            <p class="b-t serif">{b.short ?? b.title}</p>
+            {b.short && <p class="b-full">{b.title}</p>}
+            <p class="b-note">{b.note} <SourceKeys keys={b.keys} /></p>
+            <p class="b-meta">
+              {[b.author, b.year].filter(Boolean).join(' · ')}
+              {b.goodreads?.map(([label, url]) => <a href={url} rel="noopener" target="_blank">{label}</a>)}
+            </p>
+          </li>
+        ))}
+      </ol>
+
+      <h2 id="after-h">Books from those she taught</h2>
+      <ol class="books">
+        {after.map((b: Book) => (
+          <li class="book">
+            <p class="b-t serif">{b.short ?? b.title}</p>
+            {b.short && <p class="b-full">{b.title}</p>}
+            <p class="b-note">{b.note} <SourceKeys keys={b.keys} /></p>
+            <p class="b-meta">
+              {[b.author, b.year].filter(Boolean).join(' · ')}
+              {b.goodreads?.map(([label, url]) => <a href={url} rel="noopener" target="_blank">{label}</a>)}
+            </p>
+          </li>
+        ))}
+      </ol>
+
+      <h2 id="sites-h">From practitioners</h2>
+      <ol class="books">
+        {sites.map((s) => (
+          <li class="book">
+            <p class="b-t serif">{s.name}</p>
+            <p class="b-note">{s.note} <SourceKeys keys={s.keys} /></p>
+            <p class="b-meta">
+              {s.author}
+              <a href={s.url} rel="noopener" target="_blank">Visit</a>
+            </p>
+          </li>
+        ))}
+      </ol>
+    </section>
+
+    <header class="hero audit" id="all">
+      <p class="eyebrow">Acknowledgements & audit trail</p>
+      <h2 class="h-all">Every source, by key</h2>
+      <p class="prose">
+        Tap a mark like this one <SourceKeys keys={['A4']} /> to open its sources, filed below by key.
+        Many of the founding texts circulate only in class, so much of this atlas comes through teachers who cite them.
+      </p>
+      <dl class="grades">
+        <div><dt><span class="rel high">high</span></dt><dd>the lineage itself, or a careful author citing it</dd></div>
+        <div><dt><span class="rel">medium</span></dt><dd>a teacher or practitioner reporting the tradition</dd></div>
+        <div><dt><span class="rel low">low</span></dt><dd>a general reference, or a page that copies others</dd></div>
+      </dl>
+      <p class="prose small">
+        Where sources disagree, the page says so. Each source lists the pages that cite it.{usualLong && ` Web pages were read on ${usualLong} unless marked.`}
+      </p>
+      <nav class="jump" aria-label="Source groups">
+        {groups.map((g) => {
+          const n = byPrefix(g.prefix).length;
+          return n ? <a href={`#g-${g.prefix[0]}`} data-lens-only={g.lens}>{g.short} <span>{n}</span></a> : null;
+        })}
+      </nav>
+    </header>
+
+    {groups.map((g) => {
+      const list = byPrefix(g.prefix);
+      if (!list.length) return null;
+      return (
+        <section class="group" id={`g-${g.prefix[0]}`} data-lens-only={g.lens}>
+          <header class="gh">
+            <h2>{g.title}</h2>
+            <p class="muted">{g.blurb} · {list.length === 1 ? "1 source" : `${list.length} sources`}</p>
+          </header>
+          <ol class="list">
+            {list.map((s) => (
+              <li id={s.key} class="src">
+                <span class="key">{s.key}</span>
+                <div class="body">
+                  <p class="title">
+                    {s.url ? <a href={s.url} rel="noopener" target="_blank">{s.title}</a> : s.title}
+                  </p>
+                  <p class="meta">
+                    {[s.author, s.site, s.year].filter(Boolean).join(' · ')}
+                    <span class:list={['rel', s.grade]} title={s.reliability}>{s.grade}</span>
+                    {s.type !== 'web' && <span class="type">{s.type}</span>}
+                    {s.accessed && s.accessed !== usual && <span>accessed {s.accessed}</span>}
+                  </p>
+                  {s.notes && <p class="notes">{s.notes}</p>}
+                  {citedBy.has(s.key) && (
+                    <p class="cited">Cited by {citedBy.get(s.key)!.map((c, i) => <>{i > 0 && ', '}<a href={`${base}${c.href}`}>{c.label}</a></>)}</p>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
+      );
+    })}
+  </div>
+</Base>
+
+<style>
+  .page { padding-top: 56px; }
+  .hero h1 { margin: 8px 0 20px; }
+  .reading { margin-top: 40px; }
+  .reading h2 { margin: 48px 0 8px; }
+  .reading h2:first-child { margin-top: 0; }
+  .books { list-style: none; margin: 18px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 14px; }
+  .book { display: flex; flex-direction: column; gap: 6px; padding: 18px 20px; background: var(--card); border: 1px solid var(--rule); border-radius: 14px; }
+  .book.first { border-color: var(--seal); }
+  .book p { margin: 0; }
+  .b-t { font-size: 1.3rem; font-weight: 600; line-height: 1.2; color: var(--ink); }
+  .b-full { font-size: .82rem; font-style: italic; color: var(--ink-3); line-height: 1.4; }
+  .b-note { font-size: .95rem; line-height: 1.55; color: var(--ink-2); flex: 1; }
+  .b-meta { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 6px !important; font: 500 .8rem var(--sans); color: var(--ink-3); }
+  .b-meta a { color: var(--seal); }
+  .audit { margin-top: 72px; padding-top: 40px; border-top: 1px solid var(--rule); scroll-margin-top: 90px; }
+  .h-all { margin: 8px 0 16px; }
+  .lede { margin-bottom: 1em; font-size: 1.12rem; }
+  .grades { margin: 0 0 14px; display: grid; gap: 8px; }
+  .grades div { display: grid; grid-template-columns: 76px 1fr; align-items: baseline; gap: 12px; }
+  .grades dt, .grades dd { margin: 0; }
+  .grades dd { font-size: .92rem; color: var(--ink-2); }
+  .small { font-size: .9rem; color: var(--ink-3); }
+  .jump { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+  .jump a { text-decoration: none; font: 500 .82rem var(--sans); color: var(--ink-2); padding: 6px 12px; border: 1px solid var(--rule); border-radius: 99px; background: var(--card); }
+  .jump a span { color: var(--ink-3); margin-left: 4px; }
+  .group { scroll-margin-top: 100px; }
+  code { font-size: .88em; padding: 1px 6px; border-radius: 6px; background: var(--paper-2); }
+  .group { margin-top: 64px; }
+  .gh { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--rule); padding-bottom: 12px; }
+  .gh p { margin: 0; font-size: .85rem; }
+  .list { list-style: none; margin: 0; padding: 0; columns: 2 420px; column-gap: 40px; }
+  .src { break-inside: avoid; display: flex; gap: 14px; padding: 16px 0; border-bottom: 1px solid color-mix(in oklab, var(--rule) 55%, transparent); scroll-margin-top: 90px; }
+  .src:target { background: var(--seal-soft); border-radius: 10px; padding-inline: 10px; }
+  .key { flex: none; width: 40px; font: 600 .78rem/1.7 var(--sans); color: var(--seal); }
+  .body { min-width: 0; overflow-wrap: anywhere; }
+  .title { margin: 0; font: 600 1.06rem/1.35 var(--serif); }
+  .title a { text-decoration: none; }
+  .title a:hover { text-decoration: underline; }
+  .meta { margin: 4px 0 0; font-size: .78rem; color: var(--ink-3); display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; }
+  .rel, .type { font-size: .66rem; letter-spacing: .08em; text-transform: uppercase; padding: 2px 7px; border-radius: 99px; border: 1px solid var(--rule); }
+  .rel.high { color: var(--d3); border-color: color-mix(in oklab, var(--d3) 45%, transparent); }
+  .rel.low { color: var(--ink-3); }
+  .cited { margin: 6px 0 0; font-size: .76rem; color: var(--ink-3); }
+  .cited a { color: var(--ink-2); }
+  .notes { margin: 6px 0 0; font-size: .82rem; color: var(--ink-2); line-height: 1.5; }
+</style>

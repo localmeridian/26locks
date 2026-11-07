@@ -1,0 +1,97 @@
+{
+  "_meta": {
+    "about": "Burmeister's self-help material as the site shows it, read by site/src/data/selfhelp.ts. Everything here is paraphrase checked against the printed books on 2026-10-31. `ref` keeps the page for the audit trail; the page does not show it. The books stay in research/books and are not reproduced.",
+    "books": "SH1 = C16, SH2 = A44, SH3 = C19"
+  },
+  "howToApply": {
+    "items": [
+      { "t": "Any position", "d": "Sit, stand or lie down, wherever it is easiest.", "ref": "SH1 p.7" },
+      { "t": "Over clothes", "d": "Stay dressed. A hold works through clothes, and even through a cast.", "ref": "SH1 p.8" },
+      { "t": "Any part of the hand", "d": "Palm, thumb tip, fingers or the back of the hand: whichever is comfortable.", "ref": "SH1 p.8; SH2 p.10" },
+      { "t": "A light touch", "d": "Rest the hand. It takes no great pressure, and no rubbing or massage.", "ref": "SH1 p.9" },
+      { "t": "How long", "d": "Until you feel a steady pulse, or at first a few minutes a step. With four steps and fifteen minutes, three or four minutes each.", "ref": "SH1 p.7" },
+      { "t": "The tenser side", "d": "Only the tenser side needs the sequence. Until you can tell, do both; the easier side settles sooner.", "ref": "SH1 p.8" },
+      { "t": "Out of reach?", "d": "Skip it. There are no set rules, and each sequence can be fitted to you.", "ref": "SH1 pp.9, 43, 49; SH2 p.41" },
+      { "t": "How often", "d": "Burmeister’s measure is at least half an hour to an hour a day.", "ref": "SH2 p.2" },
+      { "t": "Whose energy?", "d": "Not your own. She says the hands draw on a universal supply, not on anything within us.", "ref": "SH1 p.58" },
+      { "t": "Your own way", "d": "She calls this an art and not a technique: you are the artist, and the sequences are yours to fit. Be your own testimony, she says.", "ref": "SH1 pp.6, 58; SH2 p.41" }
+    ],
+    "sources": ["C16", "A44"]
+  },
+  "breath": {
+    "steps": ["Drop the shoulders.", "Let the head bow until it feels weightless.", "Smile.", "Breathe out first, unloading from head to toes.", "Breathe in, receiving from toes to head.", "Count the out-breaths up to 36."],
+    "note": "She gives this with the palm centres held. She names the same 36 breaths with the hands folded, or the fingers held in turn.",
+    "ref": "SH2 pp.2-5, 11, 64",
+    "sources": ["A44"]
+  },
+  "projects": [
+    { "n": "I", "t": "Source of Life", "d": "The six steps of the Main Central and the three steps, each side, of the Supervisor and Mediator. A warm-up in the morning, a clean-up at night. Either set alone will do.", "href": "mcv", "ref": "SH1 p.9" },
+    { "n": "II", "t": "Attitudes", "d": "Notice which attitude is strongest right now and do its short finger sequence, or just hold its one finger: thumb for worry, index for fear, middle for anger, ring for grief, little for pretence.", "href": "attitudes", "ref": "SH1 pp.10-12" },
+    { "n": "III", "t": "Daily sequences", "d": "Three daily sequences, later called the Spleen, Stomach and Bladder flows.", "href": "spleen", "ref": "SH1 pp.13, 39" },
+    { "n": "IV", "t": "Special sequences", "d": "Short holds for wherever they are needed.", "href": "short-holds", "ref": "SH1 p.13" }
+  ],
+  "shortHolds": [
+    { "t": "Arms folded", "d": "Thumb on the inner upper arm, fingers on the outer.", "for": "Breathing, digestion", "ref": "SH1 p.51" },
+    { "t": "Sit on both hands", "d": "Palms or backs under the sitting bones.", "for": "Ascending and descending energy", "ref": "SH1 p.51" },
+    { "t": "The coat hanger", "d": "Sit on one hand and lay the other over the shoulder on that side.", "for": "That side of the abdomen, overeating, breathing", "ref": "SH1 p.52" },
+    { "t": "Palms on inner thighs", "d": "Arms crossed, each palm on the opposite thigh. One will do if the other hand is busy.", "for": "Breathing, digestion, bloat, nerves", "ref": "SH1 p.53" },
+    { "t": "Backs of the knees", "d": "Fingers or thumbs on the upper calves, just under the crease.", "for": "Muscle tension", "ref": "SH1 p.54" },
+    { "t": "Base of the skull", "d": "Both hands.", "for": "Head, eyes, fatigue", "ref": "SH1 p.54" },
+    { "t": "Hands as in prayer", "d": "Hands together, shoulders easy.", "for": "Shoulders", "ref": "SH1 p.54" },
+    { "t": "The self-hug", "d": "Thumbs on the front of the shoulder joints, fingers by the shoulder blades.", "for": "Breathing, shoulders", "ref": "SH3 p.41" }
+  ],
+  "palming": {
+    "items": [
+      { "t": "To draw inward", "d": "Right hand on the place, left hand over it. Traditionally for bleeding and hernia-like troubles." },
+      { "t": "To draw outward", "d": "Left hand on the place, right hand over it. Traditionally for a splinter, or to bring a pimple to a head." },
+      { "t": "Palming", "d": "Rest a palm on a minor burn or a grazed knee." }
+    ],
+    "direction": "Book 3 also gives the current’s direction in the limbs: with the arms raised, as she draws it, the current in the right arm and leg rises up the back and falls down the front; on the left, the reverse.",
+    "ref": "SH3 pp.6-8",
+    "sources": ["C19"]
+  },
+  "attitudes": [
+    { "key": "worry", "name": "Worry", "steps": ["thumb", "middle", "little"], "also": "anxiety, obsession, hate, depression, self-protection", "ref": "SH1 pp.22-25" },
+    { "key": "fear", "name": "Fear", "steps": ["thumb", "index", "little"], "also": "timidity, mental confusion, depression, perfectionism, criticism, frustration, desire for life", "core": true, "ref": "SH1 pp.22, 26-28" },
+    { "key": "anger", "name": "Anger", "steps": ["little", "ring", "middle"], "also": "cowardice, irritability, indecision, instability, a lack of alertness, emotionality", "ref": "SH1 pp.29-31" },
+    { "key": "grief", "name": "Grief", "steps": ["thumb", "index", "middle", "ring"], "also": "negativity, mucus, common sense", "ref": "SH1 pp.32-35" },
+    { "key": "pretence", "name": "Pretence", "steps": ["little", "ring"], "also": "tears behind a smile, insecurity, nerves, confusion, mortality", "ref": "SH1 pp.36-37" }
+  ],
+  "fingerNotes": [
+    { "key": "thumb", "label": "Thumb", "aids": "Daily fatigue, daily worries, the head and back of the head, shoulders, lungs, breathing, digestion", "toe": "opposite little toe; back, elimination, kidneys and bladder, cramps, headaches, fear", "layer": "Touch · the skin’s surface" },
+    { "key": "index", "label": "Index", "aids": "Digestion, elimination, wrist, elbow, upper arm, bones, teeth and gums, hair, circulation, bloat, depression", "toe": "opposite ring toe; liver, gallbladder, spleen, pancreas, diaphragm", "layer": "Hearing and taste · the muscles" },
+    { "key": "middle", "label": "Middle", "aids": "Ascending and descending energy, general fatigue, eyes, forehead, breathing, digestion, knees, breast-feeding", "toe": "opposite middle toe", "layer": "Speech and sight · the blood vessels" },
+    { "key": "ring", "label": "Ring", "aids": "Breathing, ears, the chest, swallowing, digestion, energy, joy, a clear mind", "toe": "opposite index toe; eyesight", "layer": "Sight · the deep skin" },
+    { "key": "little", "label": "Little", "aids": "Calming the nerves, bloat, swollen ankles, laughter, ears, digestion, breathing, headaches, clear thinking", "toe": "opposite big toe", "layer": "Smell · the skeleton" }
+  ],
+  "fingerNotesRef": "aids SH1 p.55 and SH3 pp.27-39, keeping only her lettered statements and leaving out the first-person complaint lists; toes SH3 pp.26-40 (opposite printed for thumb and little toe, p.29, and index and little toe, p.3; the rest follows pp.18-19); order of creation SH3 p.28",
+  "fingersToes": {
+    "points": [
+      { "t": "Back of the hand, sole of the foot", "d": "The back of one hand answers to the opposite sole, and the palm to the top of the opposite foot." },
+      { "t": "Three parts", "d": "The top third of a finger, toe, palm or sole relates to mind and feeling, the brain, chest and thighs; the middle third to digestion, the face, abdomen and calves; the bottom third to the body, the neck, pelvis and feet. On the palm and sole, every third also touches the brain, bar the top third, where it is already named." },
+      { "t": "Centre of the palm and sole", "d": "Both stand for the Main Central and balance the whole body. Book 3 also puts the source of energy for every cell in the palms and soles. To hold a sole, clamp the foot with the hand of the same side, fingers on the centre of the sole and thumb on top." },
+      { "t": "The bend of the elbow", "d": "It can stand in for the thumb, one elbow at a time or both." },
+      { "t": "Finger or toe", "d": "Hold the finger, its toe, or both. The one in need is whichever feels easiest, or sorest, to hold." },
+      { "t": "Hold early", "d": "Book 3 says to go to the finger as a complaint begins: the thumb for a headache, the little finger for a sore throat, the index for a backache." },
+      { "t": "The whole hand and foot", "d": "Fingers and palms, toes and soles all work on the Main Central, and through it on the organs and glands." }
+    ],
+    "conflict": "Book 3 pairs the little toe two ways. Its opening example joins the index finger to the opposite little toe for back tension (p.3), while its fuller pages join index to ring toe and thumb to little toe (pp.29-31). The atlas follows the fuller pages.",
+    "ref": "SH3 pp.3, 17, 18-25, 26-40, 41",
+    "sources": ["C19"]
+  },
+  "mudras": {
+    "intro": "These are Murai’s own poses, the ones he used in his illness. Book 3 calls them finger poses; mudra is the usual word elsewhere. Use them whenever you like and for as long as you like; there’s no need to do all eight at one sitting. Burmeister suggests two breaths in each pose, then folding the hands for the rest of a count of 36.",
+    "items": [
+      { "n": "I", "how": "Thumb on the palm side of the other hand’s middle finger, fingers on its back.", "for": "Releases from head to toe, with the out-breath" },
+      { "n": "II", "how": "Thumb on the back of the other hand’s middle finger, fingers on its palm side.", "for": "Revitalises from toes to head, with the in-breath" },
+      { "n": "III", "how": "Thumb on the palm side of the other hand’s little and ring fingers, fingers on their back.", "for": "Calming; nervous tension, organ functions" },
+      { "n": "IV", "how": "Thumb on the back of the other hand’s thumb, index and middle fingers, fingers on their palm side.", "for": "Daily fatigue, worry, fear, anger" },
+      { "n": "V", "how": "Ring the right thumb and middle finger, thumb on the nail. Pass the left thumb through the ring to rest on that same nail. Swap hands for the other side.", "for": "Revitalises all functions; daily fatigue" },
+      { "n": "VI", "how": "Rest the pad of the thumb on the ring fingernail of the same hand, on either hand.", "for": "Breathing, ears; useful walking, exercising or at altitude" },
+      { "n": "VII", "how": "Fold the hands with the palm sides of the two middle fingers touching.", "for": "Head, lungs, digestion, abdomen, legs, with the out-breath" },
+      { "n": "VIII", "how": "Bring the two middle fingernails together.", "for": "Back, whole body, with the in-breath" }
+    ],
+    "ref": "SH3 pp.9-16",
+    "sources": ["C19", "C04"]
+  }
+}

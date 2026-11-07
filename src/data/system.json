@@ -1,0 +1,128 @@
+{
+  "_meta": {
+    "accessed": "2026-10-24",
+    "bookAbbreviations": {"T1": "Burmeister, Text 1", "T2": "Burmeister, Text 2", "SH1": "Self-Help Book 1 (Jin Shin Jyutsu Is)", "SH2": "Self-Help Book 2", "SH3": "Self-Help Book 3", "TH": "The Touch of Healing (Alice Burmeister & Tom Monte); read in Spanish (C17) and German (C18)"},
+    "notation": "L = left, R = right, LH/RH = left/right hand, Hi = high, Lo = low. SH1 page refs were checked against the book (C16) on 2026-10-25; TH refs are to the Spanish (C17) or German (C18) edition, checked the same day; SH1, SH2 and SH3 refs were rechecked against the bought books on 2026-10-31; T1 and T2 refs are as cited by secondary sources (mostly C02, C04) and have not been checked.",
+    "confidenceScale": "high = two or more independent good sources agree; medium = one good source; low = single weak source or interpretive"
+  },
+  "depths": [
+    {"number": 1, "sels": [1, 2, 3, 4], "organs": ["Stomach", "Spleen"], "element": "Earth", "attitude": "Worry", "finger": "Thumb", "season": "Late summer", "chartColour": "Yellow", "bodyLayer": "Surface skin", "meaning": "Burmeister's intention for the 1st Depth is to get set for manifestation; associated gifts are a peaceful mind and boundaries.", "confidence": "high", "sources": ["C01", "C02", "C05", "C17"]},
+    {"number": 2, "sels": [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], "organs": ["Lung", "Large Intestine"], "element": "Air (Riegger-Krause); TCM equivalent would be Metal", "attitude": "Grief / sadness", "finger": "Ring", "season": "Autumn", "chartColour": "White", "bodyLayer": "Deep skin", "meaning": "Harmonious expression of spirit, mind and body; associated gift is common sense. Largest depth (11 locks). Supervisor goes one depth deeper each time it passes Lock 15.", "confidence": "high (lock range, organs, attitude, finger); medium (element)", "sources": ["C01", "C02", "C05", "C17"]},
+    {"number": 3, "sels": [16, 17, 18, 19, 20, 21, 22], "organs": ["Gallbladder", "Liver"], "element": "'Key' (Wood) in both TH translations (C17 p.50, C18); C05 also gives 'key'/ether/wood; other blogs say wind", "attitude": "Anger", "finger": "Middle", "season": "Spring", "chartColour": "Green", "bodyLayer": "Blood", "meaning": "Brings about the principle of activity; associated gift is vision.", "confidence": "high (locks, organs, attitude, finger); medium (element)", "sources": ["C01", "C02", "C05", "C17"]},
+    {"number": 4, "sels": [23], "organs": ["Bladder", "Kidney"], "element": "Water", "attitude": "Fear", "finger": "Index", "season": "Winter", "chartColour": "Blue", "bodyLayer": "Muscles", "meaning": "Bridge between the material and energetic bodies; projections are the ears. Lock 23 is the only 4th-Depth lock.", "confidence": "high", "sources": ["C01", "C02", "C04", "C05", "C17"]},
+    {"number": 5, "sels": [24, 25, 26], "organs": ["Heart", "Small Intestine"], "element": "Fire", "attitude": "Pretense / trying-to / judgement", "finger": "Little", "season": "Summer", "chartColour": "Red", "bodyLayer": "Bones", "meaning": "Arise into one's spiritual inheritance; linked with the number 7; central project is the heart. Lock 26 is not on a finger but maps to the palm centre.", "confidence": "high", "sources": ["C01", "C02", "C05", "C17"]},
+    {"number": 6, "sels": [], "organs": ["Diaphragm", "Umbilicus"], "element": "Primordial fire (C05, C17 pp.44-45, C18 p.45)", "attitude": "Total discouragement (C17) or absolute despair (C18): the two translations differ", "finger": "Palm centre (C17, C18); in pulse listening the ring-finger position", "season": "All seasons", "chartColour": null, "bodyLayer": null, "meaning": "Individual blueprint containing Depths 1-5; home of the Main Central Vertical. Diaphragm = father archetype, Umbilicus = mother archetype (TCM equivalents Pericardium/Circulation-Sex and Triple Warmer). Has no locks of its own in the 1-26 depth scheme. TH gives its locks as 0-26, i.e. all of them (C17 pp.44-45).", "confidence": "medium", "sources": ["C02", "C05", "C13", "C14", "C15", "C17"]},
+    {"number": 7, "sels": [], "organs": [], "element": null, "attitude": null, "finger": null, "meaning": "Universal light (C02 labels it 'Light'); symbolised by 7 and the sun. Interpretive/philosophical, not a hands-on depth.", "confidence": "low", "sources": ["C02", "C14"]},
+    {"number": 8, "sels": [], "organs": [], "element": null, "attitude": null, "finger": null, "meaning": "The 'dot' or origin of creation, the first thought or word of the Creator; rhythmic movement above-below without beginning or end.", "confidence": "low", "sources": ["C14"]},
+    {"number": 9, "sels": [], "organs": [], "element": null, "attitude": null, "finger": null, "meaning": "No-thing: formless, yet carrying the whole potential.", "confidence": "low", "sources": ["C14"]}
+  ],
+  "fingers": [
+    {"finger": "Thumb", "organs": ["Stomach", "Spleen"], "attitude": "Worry", "depth": 1, "sels": [1, 16, 9, 19, 21], "notes": "The thumbs are called the leaders in a parade (SH3 p.27). The thumb is the first finger in the self-help sequence for fear, which runs thumb, index, little (SH1 pp.26-28).", "sources": ["C16", "C01", "C02", "C04", "C05"]},
+    {"finger": "Index", "organs": ["Kidney", "Bladder"], "attitude": "Fear", "depth": 4, "sels": [5, 8, 10, 11, 22], "notes": "One organ-clock quickie pairs the index finger with the Large Intestine (C02); the finger and attitude tables give Kidney and Bladder.", "sources": ["C16", "C01", "C02", "C05"]},
+    {"finger": "Middle", "organs": ["Gallbladder", "Liver"], "attitude": "Anger", "depth": 3, "sels": [6, 25, 3, 12, 13], "notes": "Touching the two middle fingernails together is Mudra VIII, for the in-breath (SH3).", "sources": ["C16", "C01", "C02", "C04", "C05"]},
+    {"finger": "Ring", "organs": ["Lung", "Large Intestine"], "attitude": "Grief / sadness", "depth": 2, "sels": [7, 2, 17, 4, 14], "notes": "Thumb over ring fingernail is step 1 of the Diagonal Mediator self-help (SH1 pp.19-20).", "sources": ["C16", "C01", "C02", "C04", "C05"]},
+    {"finger": "Little", "organs": ["Heart", "Small Intestine"], "attitude": "Pretense / trying too hard", "depth": 5, "sels": [24, 23, 18, 20, 15], "notes": "The key chart puts 23, a 4th Depth place, on the little finger (C01).", "sources": ["C16", "C01", "C02", "C05"]},
+    {"finger": "Palm centre", "organs": ["Diaphragm", "Umbilicus"], "attitude": null, "depth": 6, "sels": [26], "notes": "The centre of the palm connects to the universal source (C05); holding it also harmonises the Main Central (C04).", "sources": ["C01", "C04", "C05"]}
+  ],
+  "fingerHoldGuidance": {"description": "Wrap one hand around a finger of the other hand; hands act as jumper cables.", "duration": "No fixed time: move on when the time you have allotted is up or when a rhythmic pulse is felt; at first a few minutes a step, e.g. 3-4 minutes each when four steps share 15 minutes (SH1 pp.7, 23, 56). Others: at least 3 minutes per finger, about 30 minutes for all ten (C01); 2-20 minutes (C05); hold until pulses feel synchronised (C05, not in SH1).", "sources": ["C16", "C01", "C05"]},
+  "organClock": [
+    {"organ": "Lung", "start": "04:00", "end": "06:00", "tcmStart": "03:00", "tcmEnd": "05:00", "zodiac": "Aries", "quickie": "L14 + L22", "sources": ["C17", "C18", "C02", "C05", "C07"]},
+    {"organ": "Large Intestine", "start": "06:00", "end": "08:00", "tcmStart": "05:00", "tcmEnd": "07:00", "zodiac": "Taurus", "quickie": "R11 + left index finger (or the index finger alone)", "sources": ["C17", "C18", "C02"]},
+    {"organ": "Stomach", "start": "08:00", "end": "10:00", "tcmStart": "07:00", "tcmEnd": "09:00", "zodiac": "Gemini", "quickie": "21 + 22", "sources": ["C17", "C18", "C02"]},
+    {"organ": "Spleen", "start": "10:00", "end": "12:00", "tcmStart": "09:00", "tcmEnd": "11:00", "zodiac": "Cancer", "quickie": "R5 + coccyx (or 1, or the pubic bone)", "sources": ["C17", "C18", "C02"]},
+    {"organ": "Heart", "start": "12:00", "end": "14:00", "tcmStart": "11:00", "tcmEnd": "13:00", "zodiac": "Leo", "quickie": "11 + 17", "sources": ["C17", "C18", "C02"]},
+    {"organ": "Small Intestine", "start": "14:00", "end": "16:00", "tcmStart": "13:00", "tcmEnd": "15:00", "zodiac": "Virgo", "quickie": "L11 + R13", "sources": ["C17", "C18", "C02"]},
+    {"organ": "Bladder", "start": "16:00", "end": "18:00", "tcmStart": "15:00", "tcmEnd": "17:00", "zodiac": "Libra", "quickie": "R12 + R25 (or 12 + coccyx)", "sources": ["C17", "C18", "C02"]},
+    {"organ": "Kidney", "start": "18:00", "end": "20:00", "tcmStart": "17:00", "tcmEnd": "19:00", "zodiac": "Scorpio", "quickie": "Left little toe + pubic bone (or 23)", "sources": ["C17", "C18", "C02"]},
+    {"organ": "Diaphragm", "start": "20:00", "end": "22:00", "tcmStart": "19:00", "tcmEnd": "21:00", "tcmName": "Pericardium / Circulation-Sex", "zodiac": "Sagittarius", "quickie": "L14 + R19", "sources": ["C17", "C18", "C02"]},
+    {"organ": "Umbilicus", "start": "22:00", "end": "00:00", "tcmStart": "21:00", "tcmEnd": "23:00", "tcmName": "Triple Warmer", "zodiac": "Capricorn", "quickie": "R20 + L19 (or R11 + R15)", "sources": ["C17", "C18", "C02"]},
+    {"organ": "Gallbladder", "start": "00:00", "end": "02:00", "tcmStart": "23:00", "tcmEnd": "01:00", "zodiac": "Aquarius", "quickie": "L12 + R20", "sources": ["C17", "C18", "C02"]},
+    {"organ": "Liver", "start": "02:00", "end": "04:00", "tcmStart": "01:00", "tcmEnd": "03:00", "zodiac": "Pisces", "quickie": "L4 + R22 (or same-side 4 + 22)", "sources": ["C17", "C18", "C02"]}
+  ],
+  "organClockNotes": "The Touch of Healing (C17 Spanish pp.117-145; C18 German pp.121-152), by Mary Burmeister's daughter-in-law with Mary's foreword, gives all twelve hand-over times, starting with Lung at 4am, and a short sequence for each organ; read 2026-10-25. The times agree with C02's twelve organ pages, C05 and C07. Where TH's short sequence differs from C02 (Bladder, Umbilicus, Liver) TH is shown first and C02's in brackets; for Kidney TH adds the pubic bone to the little toe, and C02's 23 is kept as the alternative. For the Large Intestine the Spanish edition says ring finger but the German says index finger (C18 p.124), agreeing with C02, so index is used. C08's Kidney, Umbilicus and Liver holds could not be traced and were dropped; C02's Spleen page confirms the coccyx alternatives (5, 1 or pubic bone). The TCM horary times are kept here but not shown on the site (no citable source). C07 adds that the cycle runs on the left side one day and the right the next (48-hour full cycle). Confidence: high for the times; medium for the quickies.",
+  "flows": [
+    {"name": "Main Central Vertical (MCV) Universal Harmonizing Energy", "group": "Trinity (Text 1)", "purpose": "Source of life; first pattern formed; the only single (unpaired) flow; descends the front with the exhale and ascends the back with the inhale; harmonises the Supervisors and endocrine centres along the midline.", "steps": [
+      {"right": "Top of head (stays for steps 1-5)", "left": "Between the eyebrows (Lock 20 level)", "description": "Step 1"},
+      {"right": "Top of head", "left": "Tip of the nose (Lock 21 level)", "description": "Step 2"},
+      {"right": "Top of head", "left": "Middle of sternum (Lock 13 level)", "description": "Step 3"},
+      {"right": "Top of head", "left": "Base of sternum (Lock 14 level)", "description": "Step 4"},
+      {"right": "Top of head", "left": "Pubic bone (Lock 15 level)", "description": "Step 5"},
+      {"right": "Coccyx (Lock 25 level)", "left": "Pubic bone", "description": "Step 6"}
+    ], "variants": "5-Day seminar version adds the throat (Lock 22 level) after the nose; Anterior-Posterior Vertical adds the space between nose and upper lip; some versions add a point above the navel (8 positions). Quickies: top of head + between eyebrows; top of head + pubic bone or coccyx; both palm centres; each finger in turn.", "sources": ["C16", "C02", "C04", "C12", "C13"], "confidence": "high for the core sequence (SH1 pp.15-17); medium for the variants"},
+    {"name": "Supervisor Universal Harmonizing Energy (left and right)", "group": "Trinity (Text 1)", "purpose": "Second aspect of the Universal Harmonizing Energy; supervises left and right sides; carries 23 of the 26 locks, with 3 on the Mediator (SH2 p.8, which does not say which); begins at Lock 1 (inner knee) and circulates through the five depths.", "steps": [
+      {"right": "L11 (top of left shoulder)", "left": "L25 (left sit bone)", "description": "Step 1, left side"},
+      {"right": "L11", "left": "L15 (left groin)", "description": "Step 2, left side. Mirror for right side."}
+    ], "pathway": "Left Supervisor lock order (C01): 1, 5, 6, 7, 24, 16, 8, 25, 2, 23, 9, 10, 3, 17, 18, 19, 11, 12, 4, crossing at the back of the head, then 20, 21, 22, 13, 14, 15 on the opposite front.", "sources": ["C01", "C02", "C11"], "confidence": "medium"},
+    {"name": "Diagonal Mediator Universal Harmonizing Energy (Supervisor/Mediator self-help)", "group": "Trinity (Text 1)", "purpose": "Mediates between left and right and with the MCV; begins at Lock 3; first flow affected by the attitudes; harmonises the five attitudes and the Supervisors.", "steps": [
+      {"left": "Left thumb over left ring fingernail", "right": "Right hand over left shoulder", "description": "Step 1a/1b (left side); thumb on ring nail cleans the chest, hand on shoulder revitalises ascending energy"},
+      {"description": "Step 1c / 2: bring inner knees together (SH1 pp.19-20; or right instep against left inner knee, T1 p.48); revitalises descending energy. Mirror for right side."}
+    ], "pathway": "Left Mediator (C02): from Lock 3 up the outer arm, around the little finger, through 19, crossing at the 3rd rib (13), to the coccyx, down the outer leg (8), around the 4th toe, up through Lock 1 and across to the right side and right thumb.", "sources": ["C16", "C02", "C04", "C11", "C13"], "confidence": "high"},
+    {"name": "1st Method of Correction", "group": "Trinity corrections (T1 pp.55-57)", "purpose": "Restores the Mediator to itself; bust line.", "steps": [{"left": "L11", "right": "L22", "description": "Anchor"}, {"left": "L11", "right": "R2", "description": ""}, {"left": "L11", "right": "L8", "description": ""}, {"left": "L11", "right": "L Hi19", "description": ""}], "sources": ["C02", "C04"], "confidence": "medium"},
+    {"name": "2nd Method of Correction ('the chiropractor')", "group": "Trinity corrections (T1 pp.55-57)", "purpose": "Restores the Mediator-Supervisor relationship; hip line.", "steps": [{"left": "L15", "right": "L2", "description": "Anchor"}, {"left": "L15", "right": "L1", "description": ""}, {"left": "L15", "right": "L Hi19", "description": ""}, {"left": "L15", "right": "L4", "description": ""}], "sources": ["C02", "C04"], "confidence": "medium"},
+    {"name": "3rd Method of Correction ('emergency flow')", "group": "Trinity corrections (T1 pp.55-57)", "purpose": "Restores the Mediator-Main Central relationship; waist line.", "steps": [{"right": "Top of head", "left": "Coccyx", "description": "Single hold"}], "sources": ["C02", "C04"], "confidence": "medium"},
+    {"name": "Fatigue Flow Adjustment (Trinity)", "group": "Trinity (T1 pp.59-60)", "purpose": "Revitalises run-down energy.", "steps": [{"description": "Anchor on Lock 3 and High 19; full flow has 17 steps (not transcribed)."}, {"right": "Top centre of right half of head", "left": "Top centre of left half of head", "description": "Quickie (T1 p.60)"}], "sources": ["C13"], "confidence": "low: the full steps are not recorded"},
+    {"name": "Spleen Function Energy (Anterior Ascending)", "group": "Organ flow / SH1 daily flow (SH1 pp.39-42)", "purpose": "Front ascending flow; the first of the three daily sequences of SH1, which calls it general energy revitalising ('refuelling'). The organ name comes from later teaching (C02, C04).", "steps": [
+      {"right": "R5 (inside of right ankle)", "left": "Coccyx", "description": "Step 1 (right side, SH1 pp.39-40): left hand on the coccyx, right hand on the inner right ankle"},
+      {"right": "L14", "left": "Coccyx", "description": "Step 2"},
+      {"right": "L14", "left": "R13", "description": "Step 3"},
+      {"right": "L14", "left": "L22", "description": "Step 4"}
+    ], "variants": "SH1 p.40: if the ankle is hard to reach, use the inner right knee (1) or the pubic bone. C04 adds alternatives for different levels: little fingers (Main Central level), Lock 22 (lock level), Lock 14 (organ-function level), Lock 19 (Special Body Function level).", "sources": ["C16", "C02", "C04", "C12"], "confidence": "high (SH1 gives every step, pp.39-42)"},
+    {"name": "Stomach Function Energy (Anterior Descending)", "group": "Organ flow / SH1 daily flow (SH1 pp.43-47)", "purpose": "Front descending flow; the second daily sequence of SH1 (anterior descending).", "steps": [
+      {"right": "L21", "left": "L22", "description": "Step 1 (left-side version, SH1 pp.45-47; right fingers stay on L21, the base of the left cheekbone)"},
+      {"right": "L21", "left": "R14", "description": "Step 2"},
+      {"right": "L21", "left": "R23", "description": "Step 3"},
+      {"right": "L21", "left": "L14", "description": "Step 4"},
+      {"right": "L21", "left": "R High 1", "description": "Step 5: inner right thigh, about 3 inches above the knee (SH1 p.47)"},
+      {"right": "L21", "left": "R Low 8", "description": "Step 6: outer right calf, midway between knee and ankle, just off the shin bone (SH1 p.47)"},
+      {"right": "L21", "left": "R middle toe", "description": "Step 7: hold the right middle toe between finger and thumb"}
+    ], "sources": ["C16", "C02", "C04", "C12"], "confidence": "high (SH1 gives every step, pp.43-47)"},
+    {"name": "Bladder Function Energy (Posterior Descending)", "group": "Organ flow / SH1 daily flow (SH1 pp.48-50)", "purpose": "The only flow running down the spine; back descending; the third daily sequence of SH1 (posterior descending).", "steps": [
+      {"right": "L12", "left": "Coccyx", "description": "Step 1 (left-side version, SH1 pp.49-50; right fingers stay on L12, the side of the neck between ear and spine)"},
+      {"right": "L12", "left": "Back of left knee", "description": "Step 2"},
+      {"right": "L12", "left": "L16", "description": "Step 3: outer left ankle, below the ankle bone"},
+      {"right": "L12", "left": "Left little toe", "description": "Step 4"}
+    ], "sources": ["C16", "C02", "C04", "C12"], "confidence": "high (SH1 gives every step, pp.48-50)"},
+    {"name": "The 12 organ function energies (quickies)", "group": "Text 2 organ flows", "purpose": "Each of the 12 organ functions has a full flow (Text 2) and a two-point quickie; flows hand over to the next at set places (Liver to Lung in the stomach area at about 4am; Large Intestine to Stomach at Lock 21; Stomach to Spleen at the big toe; Bladder to Kidney at the little toe; Diaphragm to Umbilicus at the ring fingernail).", "steps": [{"description": "The two-point hold for each organ is on the Clock page. Full sequences for nine of the twelve were not found in open sources; in Text 2, only Bladder and Umbilicus have self-help sequences (C02)."}], "sources": ["C02", "C07"], "confidence": "medium for the quickies; the full sequences are not gathered"},
+    {"name": "Special Body Function holds (SBF 1-5 and related)", "group": "Text 2 Special Body Function (T2 pp.45-56)", "purpose": "Short holds that harmonise specific body functions.", "steps": [
+      {"description": "SBF 1: sit bone + neck/shoulder"},
+      {"description": "SBF 2: Low 8 + 16"},
+      {"description": "SBF 3: 5 + 16"},
+      {"description": "SBF 4: both 8s"},
+      {"description": "SBF 5: shoulder + 19"},
+      {"description": "Thumb Function (T2 p.56): fist + shoulder"},
+      {"description": "Little Finger Function: thumb on ring nail + shoulder blade"},
+      {"description": "Deep Skin Descending (T2 p.45): calves"},
+      {"description": "Moving Order of Disharmony (T2 p.49): 6 + little toe"}
+    ], "sources": ["C02"], "confidence": "low to medium: one source, abbreviated"},
+    {"name": "Numbered lock flows (Text 1)", "group": "Text 1 lock flows", "purpose": "Flows named after lock groups: 5-6-7-8, 16-17-18-19 (T1 p.31), Lock 15 flow (T1 p.30), 23-25 (T1 p.34).", "steps": [{"description": "Steps not transcribed here; see C02 subpages."}], "sources": ["C02"], "confidence": "low"},
+    {"name": "Finger-toe flow", "group": "Text 1 (T1 p.41; SH3 p.18)", "purpose": "Fingers of one hand relate to the toes of the opposite foot (back of left hand to sole of right foot); a 10-step finger-to-toe sequence.", "steps": [{"description": "Steps not transcribed."}], "sources": ["C02"], "confidence": "low"}
+  ],
+  "ascendingDescending": {
+    "descending": {"side": "Front of body", "breath": "Exhale", "direction": "Head to feet", "flows": ["MCV front", "Stomach (anterior descending)", "Bladder (posterior descending, the one descending flow on the back)"], "pulse": "Superficial pulses", "sources": ["C02", "C04", "C05"]},
+    "ascending": {"side": "Back of body / spine", "breath": "Inhale", "direction": "Feet to head", "flows": ["MCV back", "Spleen (anterior ascending, an exception on the front)"], "pulse": "Deep pulses", "keySel": "Lock 15 is the key to ascending flows", "sources": ["C02", "C04", "C05"]},
+    "supervisorSides": {"right": "Receptive, inhale, female; ascending / un-manifesting / involution", "left": "Active, exhale, male; descending / manifesting / evolution", "sources": ["C02"], "confidence": "low-medium (single source table)"},
+    "diaphragmNote": "Diaphragm is described as an ascending flow that governs all descending flows (C02).",
+    "breathing": "36 conscious breaths are Burmeister's own (SH2 pp.5, 11); 4 x 9 and similar are common practice (C04, C05)."
+  },
+  "sels": {
+    "count": 26,
+    "perSide": "26 on each side, so 52 locations in all: 23 on the Supervisor and 3 on the Mediator (SH2 p.8, which does not say which).",
+    "formation": "locks form in sequence over repeated Supervisor circulations: 1-4 (1st Depth), 5-15 (2nd), 16-22 (3rd), 23 (4th), 24-26 (5th).",
+    "whyTwentySix": "Burmeister says the number 26 means 'complete', the present state of being (SH1 p.6, C16). No other reason is given; do not add numerology beyond that.",
+    "names": {"1": "Prime Mover", "2": "Wisdom", "3": "The Door", "4": "The Window", "5": "Regeneration", "6": "Discrimination", "7": "Victory", "8": "Rhythm / Peace", "9": "End of one cycle, beginning of another", "10": "Abundance", "11": "Unloading excess baggage", "12": "Thy will be done", "13": "Love your enemies", "14": "Equilibrium", "15": "Laughter", "16": "Transformation", "17": "Intuition", "18": "Body intelligence", "19": "Authority / leadership", "20": "Everlasting eternity", "21": "Escape from mental bondage", "22": "Complete", "23": "Destiny", "24": "Peacemaker", "25": "Be still and know", "26": "Director / complete"},
+    "landmarks": {"1": "Birthplace of the Supervisors; all depths pass through it", "3": "Birthplace of the Mediators", "15": "Key to ascending flows; Supervisor drops a depth each pass", "23": "Only 4th-Depth lock", "26": "Palm centre in finger key; harmonises MCV"},
+    "sources": ["C01", "C02", "C04"]
+  },
+  "pulseListening": {
+    "positions": {"leftIndex": "2nd Depth", "leftMiddle": "1st Depth", "leftRing": "6th Depth", "rightIndex": "5th Depth", "rightMiddle": "3rd Depth", "rightRing": "4th Depth", "bothIndex": "Bust line", "bothMiddle": "Waist line", "bothRing": "Hip line"},
+    "order": "3rd, 5th, 1st, 2nd, 4th, 6th, then 3rd again (T1 p.7); about 20 minutes per full cycle",
+    "textures": {"3rd": "fluff", "5th": "'pulse' with reverberation", "1st": "gummy", "2nd": "rocks and rods", "4th": "gurgles", "6th": "fluff with tone (harmony)"},
+    "threeLines": {"bust": "locks 13 front / 10 back, governed by Lock 4, Mediator", "waist": "locks 14 / 9, governed by Lock 12, Main Central", "hip": "locks 15 / 2, governed by Lock 11, Supervisor"},
+    "sources": ["C02", "C13"], "confidence": "medium"
+  },
+  "session": {
+    "description": "Receiver lies face-up, fully clothed; practitioner listens to the wrist pulses first, then places hands (no pressure, no manipulation) on locks in flow sequences chosen from the pulses; about one hour for adults; 20 minutes for children or the very ill; self-help has no time limit.",
+    "sources": ["C02", "C05"], "confidence": "medium"
+  },
+  "training": {"description": "5-Day Basic Part 1: 26 locks, Trinity flows, Depths, Physio-Philosophy. Part 2: 12 organ flows, pulse listening, Special Body Flows. Three 5-Day seminars (105 hours) lead to authorised practitioner status.", "sources": ["C03"]}
+}

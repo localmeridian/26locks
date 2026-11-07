@@ -1,0 +1,7 @@
+---
+// Source keys for a block, shown as one quiet citation mark that opens the list.
+import { citeHtml } from '../lib/cite';
+interface Props { keys: string[]; label?: boolean }
+const { keys } = Astro.props;
+---
+<Fragment set:html={citeHtml(keys, 'SourceKeys')} />

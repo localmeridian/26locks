@@ -1,0 +1,137 @@
+---
+// A quiet full-screen hold. Any element with data-rest opens it: data-rest names the feeling or
+// lock, data-rest-title what to hold, data-rest-how how, data-rest-after what to try next.
+// The circle keeps company only; the breath's pace is left to the person, as the books leave it.
+import HistoryText from './HistoryText.astro';
+---
+<dialog class="rest" data-rest-dialog data-state="ready" aria-labelledby="rest-title">
+  <button type="button" class="r-x" data-r-close aria-label="Close">×</button>
+  <div class="r-body">
+    <p class="eyebrow" data-r-k></p>
+    <h2 id="rest-title" data-r-title tabindex="-1" autofocus></h2>
+    <p class="r-how" data-r-how></p>
+    <div class="r-ring" aria-hidden="true">
+      <span class="r-breath"></span>
+      <svg viewBox="0 0 200 200">
+        <circle class="r-track" cx="100" cy="100" r="96" />
+        <circle class="r-gone" cx="100" cy="100" r="96" pathLength="100" data-r-gone transform="rotate(-90 100 100)" />
+      </svg>
+      <span class="r-time" data-r-time>3:00</span>
+    </div>
+    <p class="r-say" data-r-say aria-live="polite"></p>
+    <div class="r-acts">
+      <button type="button" class="r-go" data-r-go>Begin</button>
+      <button type="button" class="r-quiet" data-r-close>Done</button>
+    </div>
+    <p class="r-src"><HistoryText t="After Mary Burmeister’s Self-Help Books [C16, A44]." /></p>
+  </div>
+</dialog>
+
+<script>
+  const MS = 3 * 60 * 1000;
+  const dlg = document.querySelector<HTMLDialogElement>('[data-rest-dialog]')!;
+  const $ = <T extends Element>(k: string) => dlg.querySelector<T>(k)!;
+  const say = $<HTMLElement>('[data-r-say]'), time = $<HTMLElement>('[data-r-time]'), gone = $<SVGCircleElement>('[data-r-gone]');
+  const title = $<HTMLElement>('[data-r-title]'), how = $<HTMLElement>('[data-r-how]');
+  const words = {
+    ready: 'Three minutes. Rest your hand first, then begin.',
+    resting: 'Let the breath go out, and let it come back.',
+  };
+  let tick = 0, deadline = 0, after = '', wake: { release(): Promise<void> } | null = null;
+
+  const clock = (ms: number) => { const s = Math.ceil(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+  const setState = (s: string) => { dlg.dataset.state = s; };
+  const stop = () => { clearInterval(tick); wake?.release().catch(() => {}); wake = null; };
+
+  function reset() {
+    stop();
+    setState('ready');
+    say.textContent = words.ready;
+    time.textContent = clock(MS);
+    gone.style.strokeDashoffset = '100';
+    $<HTMLElement>('[data-r-go]').textContent = 'Begin';
+  }
+  function finish() {
+    stop();
+    setState('done');
+    time.textContent = '0:00';
+    gone.style.strokeDashoffset = '0';
+    say.textContent = after || 'Notice how things are now.';
+    $<HTMLElement>('[data-r-go]').textContent = 'Again';
+  }
+  function update() {
+    const left = deadline - Date.now();
+    if (left <= 0) return finish();
+    time.textContent = clock(left);
+    gone.style.strokeDashoffset = String((left / MS) * 100);
+  }
+  async function begin() {
+    setState('resting');
+    say.textContent = words.resting;
+    deadline = Date.now() + MS;
+    update();
+    tick = window.setInterval(update, 500);
+    try { wake = await (navigator as any).wakeLock?.request('screen') ?? null; } catch {} // keeps the screen on where supported
+  }
+
+  document.addEventListener('click', (e) => {
+    const t = (e.target as Element).closest?.<HTMLElement>('[data-rest]');
+    if (!t || (e as MouseEvent).metaKey || (e as MouseEvent).ctrlKey || (e as MouseEvent).shiftKey) return;
+    e.preventDefault();
+    $<HTMLElement>('[data-r-k]').textContent = t.dataset.rest ?? '';
+    title.textContent = t.dataset.restTitle ?? '';
+    how.textContent = t.dataset.restHow ?? '';
+    after = t.dataset.restAfter ?? '';
+    reset();
+    dlg.showModal();
+  });
+  $<HTMLElement>('[data-r-go]').addEventListener('click', () => { if (dlg.dataset.state === 'resting') return; begin(); });
+  dlg.querySelectorAll('[data-r-close]').forEach((b) => b.addEventListener('click', () => dlg.close()));
+  dlg.addEventListener('close', stop);
+  // The tab may sleep; the time still ends when it should.
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && dlg.dataset.state === 'resting') update(); });
+</script>
+
+<style>
+  .rest {
+    position: fixed; inset: 0; width: 100vw; height: 100dvh; max-width: none; max-height: none; margin: 0; padding: 0; border: 0;
+    background: var(--paper); color: var(--ink); overflow-y: auto;
+  }
+  .rest[open] { display: grid; place-items: center; animation: r-in .5s var(--ease); }
+  @keyframes r-in { from { opacity: 0; } }
+  .rest::backdrop { background: var(--paper); }
+  :global(html:has(.rest[open])) { overflow: hidden; }
+
+  .r-x {
+    position: absolute; top: max(14px, env(safe-area-inset-top)); right: 14px; width: 44px; height: 44px; border: 0; border-radius: 50%;
+    background: none; color: var(--ink-2); font: 300 1.8rem/1 var(--sans); cursor: pointer;
+  }
+  .r-x:hover { background: var(--paper-2); }
+  .r-body { width: min(30rem, 100% - 40px); padding-block: 56px 28px; text-align: center; }
+  .r-body .eyebrow { margin: 0 0 8px; color: var(--seal); }
+  .rest h2 { font-size: clamp(2.4rem, 8vw, 3.4rem); font-weight: 400; outline: 0; }
+  .r-how { margin: 10px auto 0; max-width: 26em; color: var(--ink-2); line-height: 1.5; }
+
+  .r-ring { position: relative; width: min(58vw, 34svh, 250px); aspect-ratio: 1; margin: 26px auto 22px; display: grid; place-items: center; }
+  .r-ring svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .r-track, .r-gone { fill: none; stroke-width: 2.5; }
+  .r-track { stroke: var(--seal); opacity: .75; }
+  .r-gone { stroke: var(--rule); stroke-width: 3.5; stroke-dasharray: 100; stroke-dashoffset: 100; transform-origin: center; transition: stroke-dashoffset .5s linear; }
+  .r-breath { position: absolute; inset: 14%; border-radius: 50%; background: radial-gradient(circle, color-mix(in oklab, var(--seal) 26%, transparent), color-mix(in oklab, var(--seal) 8%, transparent) 70%); transform: scale(.72); }
+  [data-state='resting'] .r-breath { animation: r-breathe 12s ease-in-out infinite; }
+  @keyframes r-breathe { 50% { transform: scale(1.12); } }
+  .r-time { position: relative; font: 400 1.5rem/1 var(--serif); font-variant-numeric: tabular-nums; color: var(--ink-2); }
+
+  .r-say { min-height: 1.5em; margin: 0 0 18px; font: italic 500 1.25rem/1.35 var(--serif); color: var(--ink-2); }
+  .r-acts { display: flex; justify-content: center; gap: 10px; }
+  .r-go, .r-quiet { height: 46px; padding: 0 28px; border-radius: 99px; font: 500 .95rem/1 var(--sans); cursor: pointer; }
+  .r-go { border: 1px solid var(--ink); background: var(--ink); color: var(--paper); }
+  .r-quiet { border: 1px solid var(--rule); background: none; color: var(--ink); }
+  [data-state='ready'] .r-quiet, [data-state='resting'] .r-go { display: none; }
+  .r-src { margin: 18px 0 0; font-size: .76rem; color: var(--ink-3); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rest[open], [data-state='resting'] .r-breath { animation: none !important; }
+    .r-breath { transform: none; }
+  }
+</style>

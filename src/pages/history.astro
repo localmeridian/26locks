@@ -1,0 +1,270 @@
+---
+import Base from '../layouts/Base.astro';
+import T from '../components/HistoryText.astro';
+import {
+  murai, burmeister, lineage, timeline, organisations,
+  evidenceSummary, studies, openQuestions, trademark,
+} from '../data/history';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const eraLabel = { japan: 'Japan', america: 'America', today: 'Today' } as const;
+const portraits = [murai, burmeister];
+---
+<Base title="History" description="Jiro Murai, Mary Burmeister and the people who carried Jin Shin Jyutsu from Japan to the world, with every claim sourced.">
+  <div class="wrap page">
+    <header class="hero">
+      <p class="eyebrow">History & lineage</p>
+      <h1>From a mountain cabin to the world</h1>
+      <p class="prose lede">
+        Jiro Murai discovered Jin Shin Jyutsu over seven days in a cabin in the mountains of Japan in 1912.
+        Nearly all we know of it comes from his student, Mary Burmeister, who brought it to the West.
+      </p>
+    
+      <ul class="brief">
+        <li><strong>1912</strong><T t="Jiro Murai, gravely ill, recovers after seven days in a mountain cabin. He spends his life asking why [H8, H13]." /></li>
+        <li><strong>Late 1940s</strong><T t="Mary Burmeister meets him in Japan and studies with him, then returns to the United States [H3, H8, H13]." /></li>
+        <li><strong>From the 1960s</strong><T t="Mary teaches in America. Jin Shin Jyutsu, Inc. now trains practitioners through its 5-day seminars [H1, H4, H8]." /></li>
+      </ul>
+    </header>
+
+    <section class="portraits" aria-label="Founders">
+      {portraits.map((p, i) => (
+        <article class="portrait card">
+          <p class="eyebrow">{i === 0 ? 'The originator' : 'The teacher'}</p>
+          <h2>{p.name}</h2>
+          {p.native && <p class:list={['native', i === 0 && 'jp']}>{p.native}</p>}
+          <p class="dates">{p.dates}</p>
+          <p class="role">{p.role}</p>
+          <ul class="facts">
+            {p.facts.map((f) => <li><T t={f} /></li>)}
+          </ul>
+        </article>
+      ))}
+    </section>
+
+    <section class="block">
+      <header class="bh">
+        <p class="eyebrow">Timeline</p>
+        <h2>Two lifetimes, one thread</h2>
+        <p class="muted small">Where sources disagree on a date, it is marked <span class="disp">sources differ</span>, not settled quietly.</p>
+      </header>
+      <ol class="tl">
+        {timeline.map((m, i) => (
+          <li class:list={['tl-item', m.era, m.disputed && 'is-disputed']}>
+            {(i === 0 || timeline[i - 1].era !== m.era) && <span class="tl-era">{eraLabel[m.era]}</span>}
+            <span class="tl-when">{m.when}</span>
+            <div class="tl-what">
+              <T t={m.what} />
+              {m.disputed && <span class="disp">sources differ</span>}
+            </div>
+          </li>
+        ))}
+      </ol>
+    </section>
+
+    <section class="block">
+      <header class="bh">
+        <p class="eyebrow">Lineage</p>
+        <h2>The people who carried it</h2>
+        <p class="muted small">Only names the sources confirm.</p>
+      </header>
+      <div class="lineage">
+        {lineage.map((g) => (
+          <div class="lg">
+            <h3>{g.group}</h3>
+            <ul>
+              {g.people.map((p) => (
+                <li>
+                  <p class="pn">{p.name}{p.dates && <span class="pd">{p.dates}</span>}</p>
+                  <T t={p.line} as="p" class="pl" />
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+      <p class="muted small aside">
+        Other traditions descend from Mary’s teaching, including the Jin Shin Institute.
+      </p>
+    </section>
+
+    <details class="block fold">
+      <summary class="bh">
+        <p class="eyebrow">Organisations</p>
+        <h2>Who teaches it now</h2>
+      </summary>
+      <div class="orgs">
+        {organisations.map((o) => (
+          <article class="org">
+            <h3>{o.name}</h3>
+            {o.where && <p class="where">{o.where}</p>}
+            {o.lines.map((l) => <T t={l} as="p" />)}
+          </article>
+        ))}
+      </div>
+    </details>
+
+    <details class="block fold" id="research">
+      <summary class="bh">
+        <p class="eyebrow">Research</p>
+        <h2>What the studies show — and don’t</h2>
+      </summary>
+      <div class="evidence">
+        {evidenceSummary.map((e) => <T t={e} as="p" />)}
+      </div>
+      <div class="studies">
+        {studies.map((s) => (
+          <article class:list={['study', s.peer ? 'peer' : 'grey']}>
+            <p class="kind">{s.peer ? 'Peer-reviewed' : 'Poster or report'}</p>
+            <T t={s.cite} as="h3" />
+            <dl>
+              <div><dt>Design</dt><dd>{s.design}</dd></div>
+              <div><dt>Participants</dt><dd>{s.n}</dd></div>
+              <div><dt>Reported</dt><dd>{s.found}</dd></div>
+              <div><dt>Caveat</dt><dd><T t={s.caveat} /></dd></div>
+            </dl>
+          </article>
+        ))}
+      </div>
+    </details>
+
+    <details class="block fold">
+      <summary class="bh">
+        <p class="eyebrow">Open questions</p>
+        <h2>Where the sources disagree</h2>
+        <p class="muted small">Left open until better sources turn up.</p>
+      </summary>
+      <ol class="oq">
+        {openQuestions.map((q) => <li><T t={q} /></li>)}
+      </ol>
+    </details>
+
+    <aside class="tm">
+      <p class="eyebrow">Trademark</p>
+      <T t={trademark} as="p" />
+    </aside>
+  </div>
+  <script>
+    // Open a folded section when the address points into it.
+    const open = () => { const t = location.hash ? document.querySelector(location.hash) : null; t?.closest('details')?.setAttribute('open', ''); };
+    open(); addEventListener('hashchange', open);
+  </script>
+</Base>
+
+<style>
+  .brief { list-style: none; padding: 0 0 0 22px; margin: 26px 0 0; display: grid; gap: 16px; max-width: 46rem; border-left: 1px solid color-mix(in oklab, var(--seal) 35%, transparent); }
+  .brief li { position: relative; display: grid; grid-template-columns: 8.5rem 1fr; gap: 14px; align-items: baseline; color: var(--ink-2); }
+  .brief li::before { content: ''; position: absolute; left: -27px; top: .55em; width: 9px; height: 9px; border-radius: 50%; background: var(--paper); border: 1.5px solid var(--seal); }
+  .brief li:first-child::before { background: var(--seal); }
+  .brief strong { font: 500 1.3rem/1.2 var(--serif); color: var(--seal); }
+  .fold > summary { cursor: pointer; list-style: none; position: relative; padding-right: 36px; }
+  .fold > summary::-webkit-details-marker { display: none; }
+  .fold > summary::after {
+    content: '+'; position: absolute; right: 4px; top: 50%; translate: 0 -50%;
+    font: 300 1.8rem/1 var(--sans); color: var(--ink-3); transition: rotate .2s var(--ease);
+  }
+  .fold[open] > summary::after { rotate: 45deg; }
+  .fold:not([open]) > summary { padding-bottom: 8px; }
+  /* The folds stack as one ruled list, not three distant islands. */
+  .fold { border-top: 1px solid var(--rule); padding-top: 28px; }
+  .fold + .fold { margin-top: 0; }
+  .fold:not([open]) > summary { margin-bottom: 20px; }
+  .fold:last-of-type { border-bottom: 1px solid var(--rule); }
+  @media (max-width: 560px) { .brief li { grid-template-columns: 1fr; gap: 2px; } }
+
+  .page { padding-top: 56px; padding-bottom: 40px; }
+  .hero h1 { margin: 10px 0 22px; line-height: 1.02; max-width: 14ch; text-wrap: balance; }
+  .lede { font-size: 1.12rem; }
+  .small { font-size: .84rem; }
+  code { font-size: .88em; padding: 1px 6px; border-radius: 6px; background: var(--paper-2); }
+  :global(.cites) { white-space: nowrap; }
+  :global(.cite-sep) { font-size: .6rem; vertical-align: super; color: var(--ink-4); margin-right: 1px; }
+
+  /* Portraits */
+  .portraits { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 24px; margin-top: 56px; }
+  .portrait { padding: clamp(24px, 4vw, 40px); position: relative; overflow: hidden; }
+  .portrait::after {
+    content: ''; position: absolute; inset: auto -40px -40px auto; width: 180px; height: 180px; border-radius: 50%;
+    border: 1px solid var(--rule); opacity: .7; pointer-events: none;
+  }
+  .portrait h2 { margin: 10px 0 2px; font-size: clamp(2rem, 4vw, 2.8rem); }
+  .native { margin: 0; color: var(--ink-3); font-size: 1rem; }
+  .dates { margin: 14px 0 0; font: 600 .78rem/1 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--seal); }
+  .role { margin: 8px 0 18px; font: italic 1.12rem/1.4 var(--serif); color: var(--ink-2); }
+  .facts { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; }
+  .facts li { position: relative; padding-left: 20px; color: var(--ink-2); line-height: 1.55; font-size: .97rem; }
+  .facts li::before { content: ''; position: absolute; left: 2px; top: .62em; width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid var(--seal); }
+
+  .block { margin-top: 96px; }
+  .bh { margin-bottom: 28px; max-width: 68ch; }
+  .bh h2 { margin: 8px 0 8px; }
+  .bh p { margin: 0; }
+
+  /* Timeline */
+  .tl { list-style: none; margin: 0; padding: 0; position: relative; max-width: 860px; }
+  .tl::before { content: ''; position: absolute; left: 136px; top: 8px; bottom: 8px; width: 1px; background: linear-gradient(var(--rule), var(--seal) 30%, var(--rule)); }
+  .tl-item { display: grid; grid-template-columns: 112px 1fr; gap: 48px; padding: 14px 0; position: relative; }
+  .tl-item::before {
+    content: ''; position: absolute; left: 131px; top: 21px; width: 11px; height: 11px; border-radius: 50%;
+    background: var(--paper); border: 2px solid var(--seal);
+  }
+  .tl-item.is-disputed::before { border-style: dashed; border-color: var(--ink-3); }
+  .tl-era {
+    grid-column: 1 / -1; font: 600 .66rem/1 var(--sans); letter-spacing: .2em; text-transform: uppercase;
+    color: var(--ink-3); margin: 18px 0 6px; padding-left: 160px;
+  }
+  .tl-when { text-align: right; font: 500 1.2rem/1.3 var(--serif); color: var(--ink); }
+  .tl-what { color: var(--ink-2); line-height: 1.55; }
+  .disp {
+    display: inline-block; margin-left: 8px; font: 600 .6rem/1 var(--sans); letter-spacing: .1em; text-transform: uppercase;
+    padding: 3px 7px; border-radius: 99px; border: 1px dashed var(--ink-4); color: var(--ink-3); vertical-align: 2px;
+  }
+
+  /* Lineage */
+  .lineage { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 36px 40px; }
+  .lg h3 { font-size: 1.15rem; margin: 0 0 12px; padding-bottom: 10px; border-bottom: 1px solid var(--rule); }
+  .lg ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; }
+  .pn { margin: 0; font: 600 1.05rem/1.3 var(--serif); color: var(--ink); }
+  .pd { margin-left: 8px; font: 500 .74rem var(--sans); color: var(--ink-3); }
+  :global(.pl) { margin: 3px 0 0; font-size: .9rem; line-height: 1.5; color: var(--ink-2); }
+  .aside { margin-top: 28px; }
+
+  /* Organisations */
+  .orgs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 18px; }
+  .org { padding: 22px; border-radius: var(--radius); background: var(--paper-2); border: 1px solid var(--rule); }
+  .org h3 { margin: 0; font-size: 1.2rem; }
+  .where { margin: 2px 0 10px; font-size: .78rem; color: var(--ink-3); }
+  .org :global(p:not(.where)) { font-size: .9rem; line-height: 1.5; color: var(--ink-2); margin: 8px 0 0; }
+
+  /* Research */
+  .evidence { max-width: 72ch; padding: 22px 26px; border-left: 3px solid var(--seal); background: var(--seal-soft); border-radius: 0 var(--radius) var(--radius) 0; }
+  .evidence :global(p) { margin: 0 0 .7em; color: var(--ink); line-height: 1.6; }
+  .evidence :global(p:last-child) { margin: 0; font-weight: 500; }
+  .studies { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 18px; margin-top: 28px; }
+  .study { padding: 20px 22px; border-radius: var(--radius); border: 1px solid var(--rule); background: var(--card); }
+  .study.grey { background: transparent; border-style: dashed; }
+  .kind { margin: 0 0 6px; font: 600 .62rem/1 var(--sans); letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3); }
+  .study.peer .kind { color: var(--d3); }
+  .study :global(h3) { margin: 0 0 12px; font-size: 1.08rem; line-height: 1.3; }
+  .study dl { margin: 0; display: grid; gap: 8px; }
+  .study dl div { display: grid; grid-template-columns: 92px 1fr; gap: 10px; }
+  .study dt { font: 600 .62rem/1.9 var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); }
+  .study dd { margin: 0; font-size: .88rem; line-height: 1.45; color: var(--ink-2); }
+
+  /* Open questions */
+  .oq { max-width: 74ch; margin: 0; padding-left: 1.4em; display: grid; gap: 10px; color: var(--ink-2); line-height: 1.55; }
+  .oq li::marker { font: 600 .8rem var(--sans); color: var(--seal); }
+
+  .tm { margin-top: 88px; padding: 22px 26px; border-radius: var(--radius); border: 1px solid var(--rule); max-width: 80ch; }
+  .tm :global(p) { margin: 8px 0 0; font-size: .86rem; line-height: 1.55; color: var(--ink-3); }
+
+  @media (max-width: 640px) {
+    .tl::before { left: 6px; }
+    .tl-item { grid-template-columns: 1fr; gap: 2px; padding: 12px 0 12px 30px; }
+    .tl-item::before { left: 1px; top: 17px; }
+    .tl-era { padding-left: 0; margin-left: -30px; padding-left: 30px; }
+    .tl-when { text-align: left; font-size: 1.1rem; }
+    .study dl div { grid-template-columns: 1fr; gap: 2px; }
+    .block { margin-top: 72px; }
+  }
+</style>

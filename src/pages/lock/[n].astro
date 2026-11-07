@@ -1,0 +1,135 @@
+---
+import Base from '../../layouts/Base.astro';
+import Term from '../../components/Term.astro';
+import SelDetail from '../../components/SelDetail.astro';
+import Plate from '../../components/Plate.astro';
+import SourceKeys from '../../components/SourceKeys.astro';
+import { sels, depths } from '../../data';
+import { supervisorOrder } from '../../data/system';
+import { positions, type Plate as PlateName } from '../../data/positions';
+
+export function getStaticPaths() {
+  return Array.from({ length: 26 }, (_, i) => ({ params: { n: String(i + 1) } }));
+}
+const n = +Astro.params.n!;
+const sel = sels.find((s) => s.n === n)!;
+const depth = depths.find((d) => d.n === sel.depth)!;
+const prev = sels.find((s) => s.n === (n === 1 ? 26 : n - 1))!;
+const next = sels.find((s) => s.n === (n === 26 ? 1 : n + 1))!;
+// Show only the drawings this lock appears on: the body, or a view of the foot.
+const names: Record<PlateName, string> = { front: 'Front', back: 'Back', medial: 'Inner foot', lateral: 'Outer foot', sole: 'Sole' };
+const where = [...new Set(positions[n].map((p) => p.plate))];
+const body = where.filter((p) => p === 'front' || p === 'back');
+const feet = where.filter((p) => !body.includes(p));
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+// Where this lock falls on the left Supervisor's path, so a reader sees it as one stop on a current, not a lone number.
+const step = supervisorOrder.indexOf(n);
+const nameOf = (k: number) => sels.find((s) => s.n === k)!.name;
+const around = step < 0 ? [] : [supervisorOrder[step - 1], n, supervisorOrder[step + 1]];
+---
+<Base title={`Lock ${n} · ${sel.name}`} description={`Safety Energy Lock ${n}, ${sel.name}: ${sel.essence}`}>
+  <div class:list={['page wrap', `d${sel.depth}`]}>
+    <nav class="crumbs">
+      <a href={`${base}/atlas/#lock-${n}`}>← <span class="pn-name">Back to the </span>Atlas</a>
+      <span class="pn">
+        <a href={`${base}/lock/${prev.n}/`} aria-label={`Previous: ${prev.n} ${prev.name}`}>‹ {prev.n}<span class="pn-name"> {prev.name}</span></a>
+        <a href={`${base}/lock/${next.n}/`} aria-label={`Next: ${next.n} ${next.name}`}>{next.n}<span class="pn-name"> {next.name}</span> ›</a>
+      </span>
+    </nav>
+    <div class="layout">
+      <div class="art">
+        {body.length > 0 && (
+          <div class:list={['art-figs', { one: body.length === 1 }]}>
+            {body.map((p) => <Plate plate={p} sels={sels} focus={n} interactive={false} label={names[p]} />)}
+          </div>
+        )}
+        {feet.length > 0 && (
+          <div class="art-feet">
+            {feet.map((p) => <Plate plate={p} sels={sels} focus={n} interactive={false} label={names[p]} class={p === 'sole' ? 'sole' : undefined} />)}
+          </div>
+        )}
+      </div>
+      <div class="text">
+        <SelDetail sel={sel} depth={depth} sels={sels} />
+        <a class:list={['onward', `d${next.depth}`]} href={`${base}/lock/${next.n}/`}>
+          <span class="on-n">{next.n}</span>
+          <span class="on-t">
+            <span class="on-eb">{n === 26 ? <>Back to the first <Term short /></> : <>Next <Term short /></>}</span>
+            <span class="on-name">{next.name}</span>
+            <span class="on-ess">{next.essence}</span>
+          </span>
+          <span class="on-arr" aria-hidden="true">→</span>
+        </a>
+        <section class="path" data-lens-only="jsj" aria-labelledby="path-h">
+          <h2 id="path-h" class="eyebrow">On the Supervisor’s path</h2>
+          {step < 0 ? (
+            <p class="path-note">The teachers’ path of the left Supervisor runs through 25 of the 26 <Term plural short />; {n} is not among them. <a href={`${base}/flows/#supervisor`}>Watch the path</a> <SourceKeys keys={['C01']} /></p>
+          ) : (
+            <>
+              <ol class="path-row">
+                {around.map((k, i) => k === undefined
+                  ? <li class="path-end" aria-hidden="true">{i === 0 ? 'start' : 'end'}</li>
+                  : <li class:list={[`d${sels.find((s) => s.n === k)!.depth}`, { here: k === n }]}>
+                      {k === n
+                        ? <span class="pc" aria-current="step">{k}</span>
+                        : <a class="pc" href={`${base}/lock/${k}/`} aria-label={`${i === 0 ? 'Before' : 'After'} it: ${k} ${nameOf(k)}`}>{k}</a>}
+                    </li>)}
+              </ol>
+              <p class="path-note">Stop {step + 1} of 25 on the left Supervisor{n === 4 ? ', where it crosses to the other side' : ''}. <a href={`${base}/flows/?sup=${n}#supervisor`}>Watch it run</a> <SourceKeys keys={['C01']} /></p>
+            </>
+          )}
+        </section>
+      </div>
+    </div>
+  </div>
+</Base>
+
+<style>
+  .page { padding-top: 28px; }
+  .crumbs { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; font-size: .86rem; color: var(--ink-3); margin-bottom: 30px; }
+  .crumbs a { text-decoration: none; color: var(--ink-2); }
+  .crumbs a:hover { color: var(--seal); }
+  .pn { display: flex; gap: 22px; }
+  .layout { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: clamp(24px, 5vw, 72px); align-items: start; }
+  .art { position: sticky; top: 88px; }
+  .art-figs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; height: min(78vh, 760px); }
+  .art-figs :global(.plate) { height: 100%; min-height: 0; }
+  .art-figs :global(.plate svg) { height: calc(100% - 22px); }
+  .art-figs.one { grid-template-columns: 1fr; }
+  .art :global(.mk:not(.focus)) { opacity: .16; }
+  .art-feet { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+  .art-feet :global(.plate) { width: 100%; max-width: 460px; }
+  .art-feet :global(.sole) { max-width: 180px; }
+  /* The page ends by leaning into the next lock, not a dead end. */
+  .onward { display: flex; align-items: center; gap: 16px; margin-top: 40px; padding: 18px 20px; border: 1px solid var(--rule); border-radius: 16px; background: var(--card); text-decoration: none; color: inherit; transition: border-color .2s var(--ease), translate .2s var(--ease); }
+  .onward:hover { border-color: var(--d); translate: 0 -2px; }
+  .on-n { flex: none; display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; background: var(--d); color: var(--paper); font: 500 1.3rem var(--serif); }
+  .on-t { flex: 1; min-width: 0; display: grid; gap: 2px; }
+  .on-eb { font: 600 .66rem var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); }
+  .on-name { font: 500 1.2rem/1.25 var(--serif); }
+  .on-ess { font: italic .95rem/1.4 var(--serif); color: var(--ink-3); }
+  .on-arr { flex: none; color: var(--d); font-size: 1.2rem; }
+  .path { margin-top: 28px; }
+  .path h2 { margin: 0 0 10px; }
+  .path-row { list-style: none; margin: 0; padding: 0; display: flex; align-items: center; gap: 0; }
+  .path-row li { display: flex; align-items: center; }
+  .path-row li + li::before { content: ''; width: 28px; height: 1px; background: var(--rule); margin-inline: 6px; }
+  .pc { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid var(--d); color: var(--d); font: 500 .95rem var(--serif); text-decoration: none; }
+  a.pc:hover { background: color-mix(in oklab, var(--d) 14%, transparent); }
+  .here .pc { width: 42px; height: 42px; background: var(--d); color: var(--paper); font-size: 1.1rem; }
+  .path-end { font: 600 .62rem var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
+  .path-note { margin: 10px 0 0; font-size: .88rem; color: var(--ink-3); }
+  @media (max-width: 820px) {
+    .layout { grid-template-columns: 1fr; }
+    .art { position: static; }
+    /* One quiet row on a phone: names give way to numbers. */
+    .crumbs { flex-wrap: nowrap; margin-bottom: 18px; }
+    .pn-name { display: none; }
+    .pn { gap: 8px; }
+    .pn a { padding: 4px 12px; border: 1px solid var(--rule); border-radius: 99px; background: var(--card); font-variant-numeric: tabular-nums; }
+    .art-figs { height: 40svh; } /* leaves the name in view on arrival */
+    .art-feet { flex-direction: row; justify-content: center; align-items: flex-end; gap: 10px; }
+    .art-feet :global(.plate) { flex: 1 1 0; min-width: 0; max-width: 300px; }
+    .art-feet :global(.sole) { flex: 0 1 26%; max-width: 110px; }
+  }
+</style>

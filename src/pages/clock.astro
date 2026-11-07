@@ -1,0 +1,293 @@
+---
+import Base from '../layouts/Base.astro';
+import Term from '../components/Term.astro';
+import Hint from '../components/Hint.astro';
+import SourceKeys from '../components/SourceKeys.astro';
+import { depths, sixthDepth, sels } from '../data';
+import { organClock, flows } from '../data/system';
+import raw from '../data/system.json';
+
+// 24-hour dial, midnight at the top, clockwise.
+const C = 200;
+const toMin = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+const ang = (min: number) => (min / 1440) * 360;
+const pt = (r: number, deg: number) => {
+  const a = ((deg - 90) * Math.PI) / 180;
+  return [+(C + r * Math.cos(a)).toFixed(2), +(C + r * Math.sin(a)).toFixed(2)];
+};
+const arc = (r1: number, r2: number, d1: number, d2: number) => {
+  const [a, b] = [pt(r2, d1), pt(r2, d2)];
+  const [c, d] = [pt(r1, d2), pt(r1, d1)];
+  return `M ${a} A ${r2} ${r2} 0 0 1 ${b} L ${c} A ${r1} ${r1} 0 0 0 ${d} Z`;
+};
+const depthOfOrgan = (o: string) => depths.find((d) => d.organs.includes(o))?.n ?? (sixthDepth.organs.includes(o) ? 6 : 0);
+const shortName: Record<string, string> = {
+  'Large Intestine': 'L. Intestine', 'Small Intestine': 'S. Intestine', Gallbladder: 'Gallbladder',
+};
+const zodiac = Object.fromEntries((raw.organClock as { organ: string; zodiac?: string }[]).map((o) => [o.organ, o]));
+
+const hours = organClock.map((o, i) => {
+  const s = toMin(o.start), e = s + 120;
+  const mid = ang(s + 60);
+  return {
+    i, organ: o.organ, label: shortName[o.organ] ?? o.organ, depth: depthOfOrgan(o.organ),
+    start: s, end: e % 1440, jsj: `${o.start}–${o.end}`,
+    zodiac: zodiac[o.organ]?.zodiac, quickie: o.quickie, sources: o.sources,
+    path: arc(132, 186, ang(s), ang(e)),
+    lx: pt(159, mid)[0], ly: pt(159, mid)[1],
+  };
+});
+const ticks = Array.from({ length: 24 }, (_, h) => ({ h, a: pt(192, ang(h * 60)), b: pt(h % 6 ? 196 : 200, ang(h * 60)), t: pt(212, ang(h * 60)) }));
+
+// "L14 + L22" → left 14 + left 22, with links to the locks.
+type Part = { text: string; n?: number };
+const quickieParts = (q: string): Part[] => {
+  const out: Part[] = [];
+  let last = 0;
+  for (const m of q.matchAll(/\b([LR])?(\d{1,2})\b/g)) {
+    const n = +m[2];
+    if (n < 1 || n > 26) continue;
+    if (m.index! > last) out.push({ text: q.slice(last, m.index) });
+    out.push({ text: `${m[1] === 'L' ? 'left ' : m[1] === 'R' ? 'right ' : ''}${n}`, n });
+    last = m.index! + m[0].length;
+  }
+  if (last < q.length) out.push({ text: q.slice(last) });
+  return out.map((p) => (p.n ? p : { text: p.text.replace(/\bSEL\s*$/, '') }));
+};
+const organFlows = flows.find((f) => f.name.startsWith('The 12 organ'))!;
+const clientHours = hours.map((h) => ({ start: h.start, organ: h.organ, jsj: h.jsj, quickie: quickieParts(h.quickie).map((p) => p.text).join('') }));
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+<Base title="Organ Clock" description="The Jin Shin Jyutsu organ function clock: each organ's two-hour window and the quickie that helps it.">
+  <div class="wrap page">
+    <header class="intro">
+      <p class="eyebrow">Rhythm</p>
+      <h1>The organ clock</h1>
+      <p class="prose lede">
+        Each organ has two hours at its strongest, starting with Lung at 4 am.
+        Then its <em>quickie</em>, a short hold, helps it along. <SourceKeys keys={['C17', 'C18', 'C02', 'C05', 'C07']} />
+      </p>
+      <Hint label="Try">The red hand is now. Tap any window for its hold.</Hint>
+    </header>
+
+    <section class="clock" data-clock>
+      <figure class="dial">
+        <svg viewBox="-24 -24 448 448" role="group" aria-label="24-hour organ clock">
+          <circle class="face" cx={C} cy={C} r="198" />
+          {ticks.map((t) => <line class:list={['tick', { major: t.h % 6 === 0 }]} x1={t.a[0]} y1={t.a[1]} x2={t.b[0]} y2={t.b[1]} />)}
+          {ticks.filter((t) => t.h % 2 === 0).map((t) => <text class="hr" x={t.t[0]} y={t.t[1]} dy=".35em">{t.h}</text>)}
+          {hours.map((h) => (
+            <g class:list={['seg', `d${h.depth}`]} data-i={h.i} tabindex="0" role="button" aria-label={`${h.organ}, ${h.jsj}`}>
+              <path d={h.path} />
+              <text x={h.lx} y={h.ly} dy=".35em">{h.label}</text>
+            </g>
+          ))}
+          <g class="now-hand" data-hand>
+            <line x1={C} y1={C} x2={C} y2="6" />
+            <circle cx={C} cy="6" r="5" />
+          </g>
+          <circle class="hub" cx={C} cy={C} r="96" />
+          <!-- The centre follows the chosen window: when, which organ, and the hold. -->
+          <foreignObject x={C - 82} y={C - 78} width="164" height="156">
+            <div class="hub-in" xmlns="http://www.w3.org/1999/xhtml">
+              <span class="hub-sub" data-hubsub>now</span>
+              <strong class="hub-organ" data-hubname></strong>
+              <span class="hub-q" data-hubq></span>
+            </div>
+          </foreignObject>
+        </svg>
+      </figure>
+
+      <div class="cards">
+        {hours.map((h) => (
+          <article class:list={['ocard', `d${h.depth}`]} data-card={h.i} hidden>
+            <p class="eyebrow"><span data-isnow hidden>Now · </span>{h.organ}<span class="dsep"> · </span><a class="dlink" href={h.depth === 6 ? `${base}/depths/#beyond` : `${base}/depths/#depth-${h.depth}`}>{h.depth === 6 ? '6th depth, beyond the five' : `${['', '1st', '2nd', '3rd', '4th', '5th'][h.depth]} depth, ${depths[h.depth - 1].layer.toLowerCase()}`}</a></p>
+            <p class="quickie">
+              <span class="sr">{h.organ}: </span>{quickieParts(h.quickie).map((p) => (p.n ? <a href={`${base}/lock/${p.n}/`}>{p.text}</a> : p.text))}
+            </p>
+            {(() => {
+              const ns = [...new Set(quickieParts(h.quickie).flatMap((p) => (p.n ? [p.n] : [])))];
+              return ns.length > 0 && (
+                <ul class="qlocks" aria-label="The locks in this hold">
+                  {ns.map((n) => { const s = sels.find((x) => x.n === n)!; return (
+                    <li><a href={`${base}/lock/${n}/`} class:list={['ql', `d${s.depth}`]}><span class="ql-n">{n}</span><span class="ql-t"><strong>{s.name}</strong> {s.where}</span></a></li>
+                  ); })}
+                </ul>
+              );
+            })()}
+            <p class="times"><span class="t-jsj">{h.jsj}</span> <SourceKeys keys={h.sources} /></p>
+            {h.zodiac && <p class="small">One source also pairs this window with {h.zodiac}.</p>}
+          </article>
+        ))}
+        <div class="nav">
+          <button type="button" data-cprev aria-label="Earlier organ">‹</button>
+          <button type="button" data-cnow>Now</button>
+          <button type="button" data-cnext aria-label="Later organ">›</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="all">
+      <h2>All twelve</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Organ</th><th>Jin Shin Jyutsu</th><th>Quickie</th></tr></thead>
+          <tbody>
+            {hours.map((h) => (
+              <tr class={`d${h.depth}`} data-row={h.i}>
+                <th><span class="sw" />{h.organ}</th>
+                <td>{h.jsj}</td>
+                <td>
+                  {quickieParts(h.quickie).map((p) => (p.n ? <a href={`${base}/lock/${p.n}/`}>{p.text}</a> : p.text))}
+                  {(() => {
+                    const ns = [...new Set(quickieParts(h.quickie).flatMap((p) => (p.n ? [p.n] : [])))];
+                    return ns.length > 0 && <span class="qn">{ns.map((n) => sels.find((x) => x.n === n)!.name).join(' · ')}</span>;
+                  })()}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="notes prose">
+      <h2>About these hours</h2>
+      <p>
+        Each window runs from the hour one organ’s energy hands over to the next. The same source’s overview calls those hours the
+        organ’s <em>peak</em>, so 4 am may be the height of Lung’s window rather than its start.
+        <SourceKeys keys={['C02']} />
+      </p>
+      <p>
+        Each organ’s current passes into the next at a set place on the body, so the twelve make one cycle a day. Liver passes into
+        Lung at the stomach area, around 4 am; Large Intestine into Stomach at <Term short /> 21; Stomach into Spleen at the big toe; Bladder into Kidney at
+        the little toe; and Diaphragm into Umbilicus at the ring fingernail. <SourceKeys keys={[...organFlows.sources, 'C17']} />
+      </p>
+      <p class="small">Source agreement: medium. The Self-Help Books give no hours; the hours and quickies here are checked against <em>The Touch of Healing</em>.</p>
+    </section>
+  </div>
+</Base>
+
+<script define:vars={{ clientHours }} is:inline>
+  window.__clock = clientHours;
+</script>
+
+<script>
+  const hours = (window as unknown as { __clock: { start: number; organ: string; jsj: string; quickie: string }[] }).__clock;
+  const root = document.querySelector<HTMLElement>('[data-clock]')!;
+  const segs = [...root.querySelectorAll<SVGGElement>('.seg')];
+  const cards = [...root.querySelectorAll<HTMLElement>('[data-card]')];
+  const rows = [...document.querySelectorAll<HTMLElement>('[data-row]')];
+  const hand = root.querySelector<SVGGElement>('[data-hand]')!;
+
+  const nowMin = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
+  const organAt = (m: number) => hours.findIndex((h) => ((m - h.start + 1440) % 1440) < 120);
+  let pick = organAt(nowMin());
+
+  function paint() {
+    const m = nowMin();
+    const cur = organAt(m);
+    hand.setAttribute('transform', `rotate(${(m / 1440) * 360} 200 200)`);
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+    root.querySelector('[data-hubsub]')!.textContent = pick === cur ? `now · ${time}` : hours[pick].jsj;
+    root.querySelector('[data-hubname]')!.textContent = hours[pick].organ;
+    root.querySelector('[data-hubq]')!.textContent = hours[pick].quickie;
+    segs.forEach((s, i) => { s.classList.toggle('is-now', i === cur); s.classList.toggle('is-pick', i === pick); });
+    cards.forEach((c, i) => { c.hidden = i !== pick; c.querySelector<HTMLElement>('[data-isnow]')!.hidden = i !== cur; });
+    rows.forEach((r, i) => { r.classList.toggle('is-now', i === cur); r.classList.toggle('is-pick', i === pick); });
+  }
+  segs.forEach((s, i) => {
+    s.addEventListener('click', () => { pick = i; paint(); });
+    s.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick = i; paint(); } });
+  });
+  rows.forEach((r, i) => r.addEventListener('click', (e) => { if ((e.target as Element).closest('a')) return; pick = i; paint(); root.scrollIntoView({ behavior: 'smooth' }); }));
+  root.querySelector('[data-cprev]')!.addEventListener('click', () => { pick = (pick + 11) % 12; paint(); });
+  root.querySelector('[data-cnext]')!.addEventListener('click', () => { pick = (pick + 1) % 12; paint(); });
+  root.querySelector('[data-cnow]')!.addEventListener('click', () => { pick = organAt(nowMin()); paint(); });
+  paint();
+  setInterval(paint, 30_000);
+</script>
+
+<style>
+  .page { padding-top: 48px; padding-bottom: 96px; }
+  .intro h1 { margin: 8px 0 16px; }
+  .small { font-size: .84rem; color: var(--ink-3); line-height: 1.5; }
+  .d6 { --d: var(--ink-3); }
+
+  .clock { margin-top: 40px; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 48px; align-items: center; }
+  .dial { margin: 0; }
+  .dial svg { width: 100%; max-width: 560px; display: block; margin-inline: auto; overflow: visible; }
+  .face { fill: var(--card); stroke: var(--rule); }
+  .tick { stroke: var(--ink-4); stroke-width: 1; }
+  .tick.major { stroke: var(--ink-3); stroke-width: 1.6; }
+  .hr { font: 600 11px var(--sans); fill: var(--ink-3); text-anchor: middle; font-variant-numeric: tabular-nums; }
+  .seg { cursor: pointer; outline: none; }
+  .seg path { fill: color-mix(in oklab, var(--d) 26%, var(--card)); stroke: var(--card); stroke-width: 2; transition: fill .3s var(--ease); }
+  .seg:hover path, .seg:focus-visible path { fill: color-mix(in oklab, var(--d) 45%, var(--card)); }
+  .seg.is-pick path { fill: var(--d); }
+  .seg text { font: 600 10.5px var(--sans); fill: var(--ink); text-anchor: middle; pointer-events: none; }
+  .seg.is-pick text { fill: var(--paper); }
+  .seg.is-now path { stroke: var(--seal); stroke-width: 2.5; }
+  .hub { fill: var(--paper); stroke: var(--rule); }
+  .hub-in { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-align: center; }
+  .hub-sub { font: 600 9px/1.2 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--seal); font-variant-numeric: tabular-nums; }
+  .hub-organ { font: 500 26px/1.05 var(--serif); color: var(--ink); }
+  .hub-q { font: italic 500 14px/1.25 var(--serif); color: var(--ink-2); max-width: 150px; }
+  .now-hand line { stroke: var(--seal); stroke-width: 2; stroke-linecap: round; }
+  .now-hand circle { fill: var(--seal); }
+
+  .cards { display: grid; gap: 14px; }
+  .ocard { padding: 24px 0 0; border-top: 1px solid var(--d); animation: rise .4s var(--ease); }
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } }
+  .ocard .eyebrow { margin: 0; color: var(--d); }
+  .dlink { color: inherit; text-decoration: underline dotted; text-underline-offset: .25em; }
+  .dlink:hover { text-decoration-style: solid; }
+  @media (max-width: 600px) { .dsep { display: none; } .dlink { display: table; margin-top: 6px; } }
+  .quickie { font: 500 clamp(1.6rem, 4vw, 2rem)/1.2 var(--serif); margin: 6px 0 10px; text-wrap: balance; }
+  /* A number alone means nothing to a newcomer: name each lock and say where it is. */
+  .qlocks { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 6px; }
+  .ql { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
+  .ql-n { flex: none; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--d); color: var(--paper); font: 600 .72rem var(--sans); font-variant-numeric: lining-nums; }
+  .ql-t { font-size: .86rem; color: var(--ink-3); line-height: 1.3; }
+  .ql-t strong { font-weight: 600; color: var(--ink-2); }
+  .ql:hover strong { color: var(--d); }
+  .quickie a { color: inherit; text-decoration-color: color-mix(in oklab, var(--d) 60%, transparent); text-underline-offset: .18em; }
+  .times { margin: 0 0 12px; font-variant-numeric: tabular-nums; }
+  .t-jsj { font: 500 1.1rem var(--serif); }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .nav { display: flex; gap: 8px; justify-content: center; }
+  .nav button { min-width: 42px; height: 38px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--rule); background: transparent; color: var(--ink); font: 500 .9rem var(--sans); cursor: pointer; }
+  .nav button:hover { border-color: var(--ink-3); }
+
+  .all { margin-top: 88px; }
+  .table-wrap { margin-top: 20px; border-radius: 16px; overflow-x: auto; border: 1px solid var(--rule); background: var(--card); }
+  table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+  th, td { padding: 11px 16px; text-align: left; border-bottom: 1px solid var(--rule); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  thead th { font: 600 .66rem var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); background: var(--paper-2); }
+  tbody th { font: 600 1.02rem var(--serif); }
+  tbody tr { cursor: pointer; }
+  tbody tr:hover { background: var(--paper-2); }
+  tbody tr.is-pick { background: color-mix(in oklab, var(--d) 12%, transparent); }
+  tbody tr.is-now th::after { content: 'now'; margin-left: 8px; font: 600 .6rem var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--seal); }
+  .sw { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--d); margin-right: 10px; }
+  td a { color: var(--d); }
+  .qn { display: block; margin-top: 2px; font-size: .8rem; color: var(--ink-3); } /* the lock names, so a bare number is never the only clue */
+  /* On a phone the hold is what matters: fold the Chinese hours under ours so the quickie fits without sideways scrolling. */
+  @media (max-width: 640px) {
+    th, td { padding: 10px 8px; }
+    table { table-layout: fixed; }
+    thead th { white-space: normal; }
+    thead th:nth-child(1) { width: 34%; } thead th:nth-child(2) { width: 30%; }
+    tbody td:nth-child(2) { white-space: normal; }
+    tbody td:last-child { white-space: normal; overflow-wrap: anywhere; }
+    tbody th { white-space: normal; }
+  }
+
+  .notes { margin-top: 72px; max-width: 72ch; }
+  .notes h2 { margin-bottom: 12px; }
+
+  @media (max-width: 860px) {
+    .clock { grid-template-columns: 1fr; gap: 24px; }
+    .ocard { padding: 22px; }
+  }
+</style>

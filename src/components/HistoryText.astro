@@ -1,0 +1,19 @@
+---
+// Renders a sourced sentence. Source keys are written inline in the data as
+// "[H8, H13]" so each claim and its evidence sit side by side in the data file;
+// each cluster renders as one quiet citation mark, kept on one line with the word before it. *word* renders italic, **word** bold.
+import { citeHtml, esc } from '../lib/cite';
+
+interface Props { t: string; as?: string; class?: string }
+const { t, as: Tag = 'span', class: cls } = Astro.props;
+
+const KEYS = String.raw`\s?\[((?:[A-Z]\d+)(?:,\s*[A-Z]\d+)*)\]`;
+const cite = (keys: string) => citeHtml(keys.split(/,\s*/), 'HistoryText');
+const html = esc(t)
+  .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+  .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+  // A last italic word moves out of its <em> so it can share the no-wrap span with the mark.
+  .replace(new RegExp(String.raw`([^\s>]+)</em>` + KEYS, 'g'), (_, w: string, keys: string) => `</em><span class="nw"><em>${w}</em>${cite(keys)}</span>`)
+  .replace(new RegExp(String.raw`([^\s>]*)` + KEYS, 'g'), (_, w: string, keys: string) => `<span class="nw">${w}${cite(keys)}</span>`);
+---
+<Tag class={cls} set:html={html} />

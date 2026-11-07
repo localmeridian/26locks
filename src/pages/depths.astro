@@ -1,0 +1,288 @@
+---
+import Base from '../layouts/Base.astro';
+import Plate from '../components/Plate.astro';
+import SourceKeys from '../components/SourceKeys.astro';
+import Term from '../components/Term.astro';
+import { sels, depths, sixthDepth } from '../data';
+import { positions, type Plate as PlateName } from '../data/positions';
+
+// Concentric diagram: the 1st Depth is the surface, the 5th the bone, the 6th the core.
+const C = 260;
+const R = [236, 196, 156, 116, 76];
+const W = 34;
+const ordinal = ['', '1st', '2nd', '3rd', '4th', '5th'];
+const polar = (r: number, deg: number) => {
+  const a = ((deg - 90) * Math.PI) / 180;
+  return [C + r * Math.cos(a), C + r * Math.sin(a)];
+};
+// Spread each depth's locks along the lower arc of its ring so labels sit above.
+const discs = depths.flatMap((d, i) => {
+  const n = d.sels.length;
+  const span = Math.min(200, 26 * n);
+  return d.sels.map((s, j) => {
+    const deg = 180 - span / 2 + (n === 1 ? span / 2 : (span * j) / (n - 1));
+    const [x, y] = polar(R[i], deg);
+    return { s, x, y, depth: d.n };
+  });
+});
+// Draw only the views that hold a depth's locks: the 2nd Depth's 5–7 and the 5th's 24 live on the feet.
+const views: PlateName[] = ['front', 'back', 'medial', 'lateral', 'sole'];
+const viewsFor = (ns: number[]) => views.filter((v) => ns.some((n) => positions[n]?.some((p) => p.plate === v)));
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+<Base title="The Five Depths" description="How the 26 Safety Energy Locks group into five depths, each with its organ pair, attitude, finger and body layer.">
+  <div class="wrap page">
+    <header class="hero">
+      <div class="hero-text">
+        <p class="eyebrow">Structure</p>
+        <h1>Five layers, skin to bone.</h1>
+        <p class="prose lede">
+          The 26 <Term plural short /> sit in five <em>depths</em>, one layer of the body each.
+          Every depth has its own organ pair, attitude, finger and season.
+          Teachers also describe deeper layers, up to a 9th; none holds a <Term short />, so they sit <a href="#beyond">beyond the five</a>.
+        </p>
+        <p class="prose small">
+          Traditional associations, not medical claims. Sources differ on the elements, so each shows how well they agree.
+          <SourceKeys keys={['C16', 'C19', 'C17', 'C01', 'C02', 'C05']} />
+        </p>
+      </div>
+
+      <figure class="rings" aria-label="The five depths as concentric layers">
+        <svg viewBox="0 0 520 520">
+          <a href="#beyond" class="core-a" aria-label="The 6th Depth, beyond the five">
+            <circle class="core" cx={C} cy={C} r={R[4] - W / 2 - 4} />
+            <text class="core-t" x={C} y={C - 6}>6th</text>
+            <text class="core-s" x={C} y={C + 12}>blueprint</text>
+          </a>
+          {depths.map((d, i) => (
+            <a href={`#depth-${d.n}`} class:list={['ring', `d${d.n}`]}>
+              <circle cx={C} cy={C} r={R[i]} stroke-width={W} />
+              <path id={`arc-${d.n}`} d={`M ${C - R[i]} ${C} A ${R[i]} ${R[i]} 0 0 1 ${C + R[i]} ${C}`} fill="none" stroke="none" />
+              <text class="ring-t"><textPath href={`#arc-${d.n}`} startOffset="50%">{ordinal[d.n]} · {d.layer}</textPath></text>
+            </a>
+          ))}
+          {discs.map((m) => (
+            <a href={`${base}/lock/${m.s}/`} class:list={['disc', `d${m.depth}`]} aria-label={`${m.s}`}>
+              <circle cx={m.x} cy={m.y} r="11.5" />
+              <text x={m.x} y={m.y} dy=".35em">{m.s}</text>
+            </a>
+          ))}
+        </svg>
+        <figcaption>Surface outside, core within. Tap a ring or a number.</figcaption>
+      </figure>
+    </header>
+
+    <section class="glance" aria-label="The five depths at a glance">
+      <div class="strip" aria-hidden="true">
+        {depths.map((d) => (
+          <a href={`#depth-${d.n}`} tabindex="-1" class:list={['seg', `d${d.n}`]} style={`flex: ${d.sels.length}`}>
+            {d.sels.map((n) => <i>{n}</i>)}
+          </a>
+        ))}
+      </div>
+      <p class="strip-cap">All 26 <Term plural short />, grouped by depth, from the surface inward.</p>
+      <ol class="key">
+        {depths.map((d) => (
+          <li class:list={['krow', `d${d.n}`]}>
+            <a href={`#depth-${d.n}`}>
+              <span class="k-n">{d.n}</span>
+              <span class="k-main">
+                <span class="k-layer">{d.layer}</span>
+                <span class="k-org">{d.organs.join(' & ')}</span>
+              </span>
+              <span class="k-cell k-att"><span class="k-dt">Attitude</span>{d.attitude.split(',')[0]}</span>
+              <span class="k-cell k-fin"><span class="k-dt">Finger</span>{d.finger}</span>
+              <span class="k-cell k-sels"><span class="k-dt"><Term plural short cap /></span>{d.sels.length === 1 ? d.sels[0] : `${d.sels[0]}–${d.sels.at(-1)}`}</span>
+            </a>
+          </li>
+        ))}
+      </ol>
+    </section>
+
+    <ol class="depths">
+      {depths.map((d) => {
+        const list = sels.filter((s) => d.sels.includes(s.n));
+        return (
+          <li id={`depth-${d.n}`} class:list={['depth', `d${d.n}`]}>
+            <div class="d-head">
+              <span class="d-num">{d.n}</span>
+              <div>
+                <p class="eyebrow">{d.layer}</p>
+                <h2>{d.name}</h2>
+                <p class="organs">{d.organs.join(' & ')}</p>
+              </div>
+            </div>
+
+            <p class="meaning">{d.meaning}</p>
+
+            <dl class="facts">
+              <div><dt>Attitude</dt><dd>{d.attitude}</dd></div>
+              <div><dt>Finger</dt><dd><a href={`${base}/fingers/#${d.finger.toLowerCase()}`}>{d.finger}</a></dd></div>
+              <div><dt>Season</dt><dd>{d.season}</dd></div>
+              <div>
+                <dt>Element</dt>
+                <dd>{d.element} <span class:list={['conf', d.elementConfidence]} title="How well the sources agree on the element">{d.elementConfidence} agreement</span></dd>
+              </div>
+            </dl>
+
+            <div class="locks">
+              <p class="eyebrow">{list.length === 1 ? <>Its one <Term short /></> : <>Its {list.length} <Term plural short /></>}</p>
+              <ul>
+                {list.map((s) => (
+                  <li>
+                    <a href={`${base}/lock/${s.n}/`} class="lock">
+                      <span class="dot-n">{s.n}</span>
+                      <span class="ln">{s.name}</span>
+                      <span class="lw">{s.where}</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div class="mini" aria-hidden="true">
+              <div class="mb">
+                <Plate plate="front" sels={sels} only={d.sels} interactive={false} />
+                <Plate plate="back" sels={sels} only={d.sels} interactive={false} />
+              </div>
+              {viewsFor(d.sels).some((v) => v !== 'front' && v !== 'back') && (
+                <div class="mf">
+                  {viewsFor(d.sels).filter((v) => v !== 'front' && v !== 'back').map((v) => <Plate plate={v} sels={sels} only={d.sels} interactive={false} />)}
+                </div>
+              )}
+            </div>
+
+            <footer class="d-foot">
+              <SourceKeys keys={d.sources} />
+              <span class="reviewed">checked {d.reviewed}</span>
+            </footer>
+          </li>
+        );
+      })}
+    </ol>
+
+    <section class="beyond card" id="beyond">
+      <p class="eyebrow">Beyond the five</p>
+      <h2>The 6th Depth</h2>
+      <p class="prose">{sixthDepth.meaning}</p>
+      <p class="organs">{sixthDepth.organs.join(' & ')}</p>
+      <p class="small muted">
+        The sources agree only in part here. Some go on to describe 7th to 9th depths in philosophical terms. Those depths have no hands-on locations, so the atlas
+        leaves them out. <SourceKeys keys={sixthDepth.sources} />
+      </p>
+    </section>
+  </div>
+</Base>
+
+<style>
+  .page { padding-top: 48px; padding-bottom: 96px; }
+  .hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 520px); gap: 48px; align-items: center; }
+  .hero h1 { margin: 8px 0 20px; }
+  .small { font-size: .9rem; color: var(--ink-3); }
+
+  .rings { margin: 0; }
+  .rings svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .rings figcaption { text-align: center; font-size: .8rem; color: var(--ink-3); margin-top: 8px; }
+  .ring circle { fill: none; stroke: var(--d); opacity: .16; transition: opacity .3s var(--ease); }
+  .ring:hover circle, .ring:focus-visible circle { opacity: .32; }
+  .ring-t { font: 600 10.5px var(--sans); letter-spacing: .14em; text-transform: uppercase; fill: var(--d); text-anchor: middle; dominant-baseline: central; }
+  .core { fill: var(--paper-3); stroke: var(--rule); }
+  .core-t { font: 600 20px var(--serif); fill: var(--ink-2); text-anchor: middle; }
+  .core-a:hover .core, .core-a:focus-visible .core { stroke: var(--seal); }
+  .core-s { font: 500 9px var(--sans); letter-spacing: .16em; text-transform: uppercase; fill: var(--ink-3); text-anchor: middle; }
+  .disc circle { fill: var(--d); stroke: var(--paper); stroke-width: 2; transition: transform .2s var(--ease); transform-box: fill-box; transform-origin: center; }
+  .disc text { font: 700 10px var(--sans); fill: var(--paper); text-anchor: middle; pointer-events: none; }
+  .disc:hover circle, .disc:focus-visible circle { transform: scale(1.18); }
+
+  .glance { margin-top: 56px; }
+  .strip { display: flex; gap: 3px; height: 34px; }
+  .seg { display: flex; gap: 1px; border-radius: 6px; overflow: hidden; text-decoration: none; transition: filter .2s var(--ease); }
+  .seg:hover { filter: brightness(1.08); }
+  .seg i { flex: 1; display: grid; place-items: center; background: var(--d); color: var(--paper); font: 700 .62rem var(--sans); font-style: normal; min-width: 0; }
+  .strip-cap { margin: 8px 0 0; font-size: .8rem; color: var(--ink-3); }
+  .key { list-style: none; margin: 22px 0 10px; padding: 0; border-top: 1px solid var(--rule); }
+  .krow { border-bottom: 1px solid var(--rule); }
+  .krow a {
+    display: grid; grid-template-columns: 40px minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, .7fr) minmax(0, .6fr);
+    gap: 4px 18px; align-items: center; padding: 12px 6px; text-decoration: none; color: var(--ink); border-radius: 8px;
+    transition: background .2s var(--ease);
+  }
+  .krow a:hover { background: color-mix(in oklab, var(--d) 8%, transparent); }
+  .k-n { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: var(--d); color: var(--paper); font: 600 1.05rem var(--serif); font-variant-numeric: lining-nums; }
+  .k-main { display: flex; flex-direction: column; gap: 2px; }
+  .k-layer { font: 600 .66rem/1.2 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--d); }
+  .k-org { font: italic 500 1.08rem/1.2 var(--serif); }
+  .k-cell { font-size: .9rem; display: flex; flex-direction: column; gap: 2px; }
+  .k-dt { font: 600 .58rem/1.2 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); }
+  .krow + .krow .k-dt { visibility: hidden; height: 0; }
+
+  .depths { list-style: none; margin: 72px 0 0; padding: 0; display: grid; gap: 40px; }
+  .depth {
+    display: grid; gap: 18px 40px; padding: 40px 0 8px;
+    border-top: 1px solid var(--d); scroll-margin-top: 90px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 200px;
+    grid-template-areas: 'head head mini' 'meaning facts mini' 'extra extra mini' 'locks locks mini' 'foot foot foot';
+  }
+  .depth:target { outline: 2px solid color-mix(in oklab, var(--d) 50%, transparent); outline-offset: 4px; }
+  .d-head { grid-area: head; display: flex; gap: 18px; align-items: center; }
+  .d-num { flex: none; width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; font: 600 1.8rem var(--serif); font-variant-numeric: lining-nums; color: var(--paper); background: var(--d); }
+  .d-head h2 { margin: 2px 0 0; }
+  .d-head .eyebrow { margin: 0; color: var(--d); }
+  .organs { margin: 2px 0 0; font: italic 500 1.15rem var(--serif); color: var(--ink-2); }
+  .meaning { grid-area: meaning; margin: 0; font: 500 1.2rem/1.5 var(--serif); color: var(--ink); }
+  .facts { grid-area: facts; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 14px 20px; align-content: start; }
+  .facts dt { font: 600 .66rem var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); }
+  .facts dd { margin: 3px 0 0; font-size: .95rem; color: var(--ink); }
+  .facts div:last-child { grid-column: 1 / -1; }
+  .conf { font-size: .62rem; letter-spacing: .08em; text-transform: uppercase; padding: 1px 6px; border-radius: 99px; border: 1px solid var(--rule); color: var(--ink-3); white-space: nowrap; }
+  .conf.low { color: var(--d4); border-color: color-mix(in oklab, var(--d4) 40%, transparent); }
+
+  .locks { grid-area: locks; }
+  .locks .eyebrow { margin: 0 0 10px; }
+  .locks ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px 16px; }
+  .lock { display: grid; grid-template-columns: 30px 1fr; column-gap: 10px; align-items: center; text-decoration: none; padding: 6px 8px; border-radius: 10px; }
+  .lock:hover { background: var(--paper-2); }
+  .dot-n { grid-row: span 2; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font: 700 .72rem var(--sans); color: var(--d); border: 1.5px solid var(--d); }
+  .ln { font: 600 1.02rem/1.2 var(--serif); color: var(--ink); }
+  .lw { font-size: .76rem; color: var(--ink-3); }
+
+  .mini { grid-area: mini; display: flex; flex-direction: column; gap: 6px; height: 300px; align-self: center; }
+  .mb { flex: 1 1 0; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: minmax(0, 1fr); gap: 4px; }
+  .mf { flex: 0 0 26%; min-height: 0; display: flex; justify-content: center; gap: 6px; }
+  .mf :global(.plate) { flex: 0 1 auto; }
+  /* A definite row lets Safari size the plates to the box, not to their width. */
+  .mini :global(.plate) { height: 100%; min-height: 0; }
+  .mini :global(.hint) { opacity: .5; }
+  .d-foot { grid-area: foot; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-top: 1px solid var(--rule); padding-top: 14px; }
+  .reviewed { font-size: .72rem; color: var(--ink-3); }
+
+  .beyond { margin-top: 28px; padding: 32px; scroll-margin-top: 90px; }
+  .beyond h2 { margin: 4px 0 12px; }
+
+  @media (max-width: 920px) {
+    .hero { grid-template-columns: 1fr; gap: 24px; }
+    .rings { max-width: 440px; margin-inline: auto; width: 100%; }
+    .depth { grid-template-columns: minmax(0, 1fr) 120px; grid-template-areas: 'head mini' 'meaning meaning' 'facts facts' 'extra extra' 'locks locks' 'foot foot'; padding: 22px; }
+    .mini { height: 150px; }
+  }
+  @media (max-width: 620px) {
+    .krow a { grid-template-columns: 36px minmax(0, 1fr) auto; grid-template-areas: 'n main sels' 'n att fin'; gap: 6px 12px; }
+    .k-n { grid-area: n; align-self: start; }
+    .k-main { grid-area: main; }
+    .k-cell { flex-direction: row; gap: 6px; align-items: baseline; font-size: .84rem; color: var(--ink-2); }
+    .k-att { grid-area: att; }
+    .k-fin { grid-area: fin; }
+    /* Which locks live at each depth is the reason to read this table, so it stays on a phone. */
+    .k-sels { grid-area: sels; justify-self: end; align-self: start; font-variant-numeric: lining-nums; }
+    .k-sels, .k-fin { justify-content: flex-end; }
+    .krow + .krow .k-dt { visibility: visible; height: auto; }
+    .strip { height: 28px; }
+    .seg i { font-size: .5rem; }
+    .depths { margin-top: 40px; }
+  }
+  @media (max-width: 520px) {
+    .depth { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'head' 'mini' 'meaning' 'facts' 'extra' 'locks' 'foot'; }
+    .mini { height: 220px; max-width: 240px; margin-inline: auto; width: 100%; }
+    .meaning { font-size: 1.1rem; }
+  }
+</style>
